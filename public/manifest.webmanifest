@@ -2,13 +2,14 @@
   "name": "Cardigan Incorporated",
   "short_name": "Cardigan",
   "description": "Therapy matching, membership care, secure messaging, and live sessions.",
-  "start_url": "/client",
+  "start_url": "./client/",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f8f4ee",
   "theme_color": "#315f52",
   "icons": [
     {
-      "src": "/window.svg",
+      "src": "window.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"

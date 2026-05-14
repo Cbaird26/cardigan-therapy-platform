@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { publicPath } from "@/lib/public-path";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
   description:
     "A HIPAA-ready therapy marketplace for Florida clients, curated clinicians, membership care, secure messaging, live sessions, and guided between-session support.",
   applicationName: "Cardigan Incorporated",
-  manifest: "/manifest.webmanifest",
+  manifest: publicPath("/manifest.webmanifest"),
   metadataBase: new URL("https://cardigan.health"),
   openGraph: {
     title: "Cardigan Incorporated Therapy Platform",

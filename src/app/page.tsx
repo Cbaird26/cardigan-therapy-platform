@@ -15,6 +15,7 @@ import Image from "next/image";
 import { SiteShell } from "@/components/site-shell";
 import { ButtonLink, Card, SectionHeader, StatusPill } from "@/components/ui";
 import { dashboardMetrics, membershipPlans, providers } from "@/lib/mock-data";
+import { publicPath } from "@/lib/public-path";
 
 const workflow = [
   {
@@ -81,7 +82,7 @@ export default function Home() {
                 className="h-64 w-full object-cover object-center"
                 height={640}
                 priority
-                src="/clinical-lead.jpg"
+                src={publicPath("/clinical-lead.jpg")}
                 width={900}
               />
               <div className="grid gap-4 p-5">
