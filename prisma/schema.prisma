@@ -1,0 +1,312 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  CLIENT
+  THERAPIST
+  SUPERVISOR
+  ADMIN
+}
+
+enum MembershipStatus {
+  TRIALING
+  ACTIVE
+  PAUSED
+  CANCELED
+  PAST_DUE
+}
+
+enum SessionStatus {
+  REQUESTED
+  SCHEDULED
+  COMPLETED
+  CANCELED
+  NO_SHOW
+}
+
+enum MessageThreadStatus {
+  OPEN
+  MUTED
+  ESCALATED
+  CLOSED
+}
+
+enum ConsentType {
+  TERMS
+  PRIVACY
+  TELEHEALTH
+  AI_COMPANION
+  PAYMENT
+}
+
+enum AiMode {
+  INTAKE_GUIDE
+  SKILLS_COACH
+  BETWEEN_SESSION_SUPPORT
+}
+
+enum RiskLevel {
+  NONE
+  LOW
+  MODERATE
+  HIGH
+  CRISIS
+}
+
+enum CrisisStatus {
+  OPEN
+  REVIEWED
+  ESCALATED
+  RESOLVED
+}
+
+model User {
+  id             String          @id @default(cuid())
+  role           UserRole
+  email          String          @unique
+  displayName    String
+  cognitoSub     String?         @unique
+  clientProfile  ClientProfile?
+  providerProfile ProviderProfile?
+  sentMessages   Message[]       @relation("MessageSender")
+  auditEvents    AuditEvent[]    @relation("AuditActor")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model ClientProfile {
+  id                   String            @id @default(cuid())
+  userId               String            @unique
+  user                 User              @relation(fields: [userId], references: [id])
+  legalName            String?
+  preferredName        String?
+  dateOfBirth          DateTime?
+  state                String            @default("FL")
+  timezone             String            @default("America/New_York")
+  ageRange             String
+  concerns             String[]
+  modalityPreference   String
+  matchedProviderId    String?
+  matchedProvider      ProviderProfile?  @relation("ClientMatch", fields: [matchedProviderId], references: [id])
+  intakeResponses      IntakeResponse[]
+  matchCandidates      MatchCandidate[]
+  memberships          Membership[]
+  sessions             Session[]
+  messageThreads       MessageThread[]
+  consentArtifacts     ConsentArtifact[]
+  assessments          Assessment[]
+  therapistNotes       TherapistNote[]
+  aiConversations      AIConversation[]
+  crisisFlags          CrisisFlag[]
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+}
+
+model ProviderProfile {
+  id                String            @id @default(cuid())
+  userId            String            @unique
+  user              User              @relation(fields: [userId], references: [id])
+  credentials       String
+  bio               String
+  states            String[]
+  specialties       String[]
+  modalities        String[]
+  acceptsMinors     Boolean           @default(false)
+  acceptingClients  Boolean           @default(false)
+  supervisorId      String?
+  supervisor        ProviderProfile?  @relation("ProviderSupervision", fields: [supervisorId], references: [id])
+  supervisees       ProviderProfile[] @relation("ProviderSupervision")
+  matchedClients    ClientProfile[]   @relation("ClientMatch")
+  licenses          ProviderLicense[]
+  availabilitySlots AvailabilitySlot[]
+  matchCandidates   MatchCandidate[]
+  sessions          Session[]
+  messageThreads    MessageThread[]
+  therapistNotes    TherapistNote[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+model ProviderLicense {
+  id          String          @id @default(cuid())
+  providerId  String
+  provider    ProviderProfile @relation(fields: [providerId], references: [id])
+  state       String
+  licenseType String
+  licenseId   String
+  verifiedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime        @default(now())
+
+  @@unique([state, licenseId])
+}
+
+model AvailabilitySlot {
+  id          String          @id @default(cuid())
+  providerId  String
+  provider    ProviderProfile @relation(fields: [providerId], references: [id])
+  startsAt    DateTime
+  endsAt      DateTime
+  isHeld      Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+}
+
+model IntakeResponse {
+  id                String        @id @default(cuid())
+  clientId          String
+  client            ClientProfile @relation(fields: [clientId], references: [id])
+  answers           Json
+  triageSummary     String?
+  consentedToMatch  Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+}
+
+model MatchCandidate {
+  id          String          @id @default(cuid())
+  clientId    String
+  client      ClientProfile   @relation(fields: [clientId], references: [id])
+  providerId  String
+  provider    ProviderProfile @relation(fields: [providerId], references: [id])
+  score       Int
+  reasons     String[]
+  reviewedBy  String?
+  createdAt   DateTime        @default(now())
+
+  @@unique([clientId, providerId])
+}
+
+model Membership {
+  id                    String           @id @default(cuid())
+  clientId              String
+  client                ClientProfile    @relation(fields: [clientId], references: [id])
+  status                MembershipStatus @default(TRIALING)
+  planCode              String
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?
+  currentPeriodStart    DateTime?
+  currentPeriodEnd      DateTime?
+  canceledAt            DateTime?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+}
+
+model Session {
+  id            String          @id @default(cuid())
+  clientId      String
+  client        ClientProfile   @relation(fields: [clientId], references: [id])
+  providerId    String
+  provider      ProviderProfile @relation(fields: [providerId], references: [id])
+  startsAt      DateTime
+  endsAt        DateTime
+  status        SessionStatus   @default(SCHEDULED)
+  dailyRoomName String
+  dailyRoomUrl  String?
+  notes         TherapistNote[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model MessageThread {
+  id          String              @id @default(cuid())
+  clientId    String
+  client      ClientProfile       @relation(fields: [clientId], references: [id])
+  providerId  String
+  provider    ProviderProfile     @relation(fields: [providerId], references: [id])
+  status      MessageThreadStatus @default(OPEN)
+  messages    Message[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model Message {
+  id          String        @id @default(cuid())
+  threadId    String
+  thread      MessageThread @relation(fields: [threadId], references: [id])
+  senderId    String
+  sender      User          @relation("MessageSender", fields: [senderId], references: [id])
+  body        String
+  isPinned    Boolean       @default(false)
+  riskLevel   RiskLevel     @default(NONE)
+  createdAt   DateTime      @default(now())
+}
+
+model ConsentArtifact {
+  id             String        @id @default(cuid())
+  clientId       String
+  client         ClientProfile @relation(fields: [clientId], references: [id])
+  type           ConsentType
+  version        String
+  documentHash   String
+  ipAddress      String?
+  userAgent      String?
+  signedAt       DateTime      @default(now())
+
+  @@unique([clientId, type, version])
+}
+
+model Assessment {
+  id          String        @id @default(cuid())
+  clientId    String
+  client      ClientProfile @relation(fields: [clientId], references: [id])
+  type        String
+  score       Int?
+  payload     Json
+  createdAt   DateTime      @default(now())
+}
+
+model TherapistNote {
+  id          String          @id @default(cuid())
+  clientId    String
+  client      ClientProfile   @relation(fields: [clientId], references: [id])
+  providerId  String
+  provider    ProviderProfile @relation(fields: [providerId], references: [id])
+  sessionId   String?
+  session     Session?        @relation(fields: [sessionId], references: [id])
+  title       String
+  body        String
+  lockedAt    DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model AIConversation {
+  id                String        @id @default(cuid())
+  clientId          String
+  client            ClientProfile @relation(fields: [clientId], references: [id])
+  mode              AiMode
+  transcript        Json
+  riskLevel         RiskLevel     @default(NONE)
+  consentedToSave   Boolean       @default(false)
+  savedToRecord     Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+}
+
+model CrisisFlag {
+  id          String        @id @default(cuid())
+  clientId    String
+  client      ClientProfile @relation(fields: [clientId], references: [id])
+  source      String
+  severity    RiskLevel
+  status      CrisisStatus  @default(OPEN)
+  summary     String
+  createdAt   DateTime      @default(now())
+  reviewedAt  DateTime?
+}
+
+model AuditEvent {
+  id           String    @id @default(cuid())
+  actorId      String?
+  actor        User?     @relation("AuditActor", fields: [actorId], references: [id])
+  actorRole    UserRole?
+  action       String
+  resourceType String
+  resourceId   String?
+  metadata     Json?
+  ipAddress    String?
+  createdAt    DateTime  @default(now())
+}

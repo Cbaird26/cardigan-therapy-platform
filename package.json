@@ -1,0 +1,46 @@
+{
+  "name": "cardigan-therapy-platform",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "build:pages": "node scripts/build-pages.mjs",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "cdk:synth": "cdk synth --app \"npx tsx infra/bin/cardigan.ts\""
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1045.0",
+    "@prisma/client": "^7.8.0",
+    "lucide-react": "^1.14.0",
+    "next": "16.2.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "stripe": "^22.1.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.6",
+    "aws-cdk": "^2.1121.0",
+    "aws-cdk-lib": "^2.254.0",
+    "constructs": "^10.6.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "prisma": "^7.8.0",
+    "tailwindcss": "^4",
+    "tsx": "^4.21.0",
+    "typescript": "^5",
+    "vitest": "^4.1.6"
+  }
+}

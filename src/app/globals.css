@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8f4ee;
+  --foreground: #1e1c18;
+  --surface: #fffdf8;
+  --surface-muted: #eee6da;
+  --border: #d9cebd;
+  --muted: #6d665b;
+  --primary: #315f52;
+  --primary-foreground: #f9fbf7;
+  --accent: #c8744f;
+  --accent-foreground: #fffaf6;
+  --gold: #b48a3d;
+  --rose: #9d5b62;
+  --success: #3f7a58;
+  --warning: #9a6a22;
+  --danger: #a23e3e;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #181713;
+    --foreground: #f6efe3;
+    --surface: #242119;
+    --surface-muted: #2f2a20;
+    --border: #4a4133;
+    --muted: #c6bbaa;
+    --primary: #88b9a5;
+    --primary-foreground: #10251f;
+    --accent: #df9a77;
+    --accent-foreground: #2e160e;
+    --gold: #d2b16b;
+    --rose: #d58d95;
+    --success: #8cc99f;
+    --warning: #d7a94a;
+    --danger: #e68b8b;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.cardigan-focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.cardigan-focus:focus-visible {
+  outline-color: var(--accent);
+}
+
+.mesh {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--border) 42%, transparent) 1px, transparent 1px),
+    linear-gradient(180deg, color-mix(in srgb, var(--border) 42%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.glass-rule {
+  border-color: color-mix(in srgb, var(--border) 74%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
