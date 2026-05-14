@@ -1,8 +1,11 @@
 import type { NextConfig } from "next";
 
 const staticExport = process.env.STATIC_EXPORT === "true";
+const pagesBasePath = "/cardigan-therapy-platform";
 
 const nextConfig: NextConfig = {
+  assetPrefix: staticExport ? `${pagesBasePath}/` : undefined,
+  basePath: staticExport ? pagesBasePath : undefined,
   output: staticExport ? "export" : undefined,
   images: {
     unoptimized: staticExport,
