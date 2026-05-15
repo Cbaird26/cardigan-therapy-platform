@@ -7,7 +7,7 @@ export const metadata = {
 };
 
 export function generateStaticParams() {
-  return [{ id: "demo-session" }];
+  return [{ id: "pending-session" }];
 }
 
 export default async function SessionPage({
@@ -27,17 +27,17 @@ export default async function SessionPage({
                 <p className="text-sm text-[#c8bdaa]">Session ID</p>
                 <h1 className="font-semibold">{id}</h1>
               </div>
-              <StatusPill tone="success">Daily private room</StatusPill>
+              <StatusPill tone="warning">Video gated</StatusPill>
             </div>
             <div className="grid min-h-[520px] place-items-center px-5 py-10">
               <div className="text-center">
                 <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-lg border border-white/20 bg-[#315f52]">
                   <Video aria-hidden className="h-10 w-10" />
                 </div>
-                <h2 className="mt-6 text-3xl font-semibold">Video room placeholder</h2>
+                <h2 className="mt-6 text-3xl font-semibold">Live room locked</h2>
                 <p className="mx-auto mt-3 max-w-xl leading-7 text-[#c8bdaa]">
-                  The API creates a random Daily room with recording disabled. In production this
-                  panel embeds the Daily call object after auth, consent, and session-time checks.
+                  Daily rooms stay disabled until the Healthcare/HIPAA add-on, BAA, consent,
+                  provider assignment, and session-time checks are complete.
                 </p>
               </div>
             </div>

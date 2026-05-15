@@ -1,28 +1,16 @@
-import { apiError, ok } from "@/lib/api";
-import { classifyRisk } from "@/lib/ai-safety";
-import { createAuditEvent } from "@/lib/compliance";
+import { apiError, ok, parseRequestData } from "@/lib/api";
+import { getRequestContext, requireApiPermission } from "@/lib/auth";
+import { createMessage } from "@/lib/clinical-store";
 import { messageSchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
   try {
-    const message = messageSchema.parse(await request.json());
-    const riskLevel = classifyRisk(message.body);
-    const escalated = riskLevel === "high" || riskLevel === "crisis";
+    const context = getRequestContext(request);
+    requireApiPermission(context, "message:create");
+    const message = messageSchema.parse(await parseRequestData(request));
+    const result = await createMessage(message, context);
 
-    return ok(
-      {
-        messageId: crypto.randomUUID(),
-        threadId: message.threadId,
-        status: escalated ? "escalated-for-review" : "sent",
-        riskLevel,
-        audit: createAuditEvent({
-          actorRole: "client",
-          action: escalated ? "message.escalated" : "message.created",
-          resourceType: "Message",
-        }),
-      },
-      201,
-    );
+    return ok(result, 201);
   } catch (error) {
     return apiError(error);
   }

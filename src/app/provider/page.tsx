@@ -35,18 +35,19 @@ export default function ProviderPage() {
             <Card>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-semibold text-muted">Next session</p>
-                  <h2 className="mt-2 text-2xl font-semibold">Demo client • 4:30 PM ET</h2>
+                  <p className="text-sm font-semibold text-muted">Launch queue</p>
+                  <h2 className="mt-2 text-2xl font-semibold">No active clinical sessions yet</h2>
                   <p className="mt-2 text-sm leading-6 text-muted">
-                    Telehealth room opens 15 minutes before start. Recording disabled by policy.
+                    Session rooms stay disabled until intake, consent, membership, and Daily HIPAA
+                    review gates are complete.
                   </p>
                 </div>
                 <CalendarClock aria-hidden className="h-6 w-6 text-primary" />
               </div>
               <div className="mt-5 flex flex-wrap gap-3">
-                <ButtonLink href="/session/demo-session">Open room</ButtonLink>
-                <ButtonLink href="/messages/demo-thread" icon={MessageSquareText} variant="secondary">
-                  Message client
+                <ButtonLink href="/admin">Review intake queue</ButtonLink>
+                <ButtonLink href="/messages/secure-thread" icon={MessageSquareText} variant="secondary">
+                  Secure messaging
                 </ButtonLink>
               </div>
             </Card>
@@ -58,9 +59,9 @@ export default function ProviderPage() {
               />
               <div className="mt-5 grid gap-3">
                 {[
-                  ["Demo client A", "GAD-7 due", "Tomorrow session"],
-                  ["Demo client B", "AI journal pinned", "Risk: low"],
-                  ["Demo client C", "Provider switch requested", "Admin reviewing"],
+                  ["Intake submissions", "Visible after client consent", "Admin reviewed"],
+                  ["Secure messages", "Created only for matched clients", "Audit logged"],
+                  ["Risk flags", "Opened by message or AI safety routing", "Review required"],
                 ].map(([name, detail, status]) => (
                   <div
                     className="grid gap-3 rounded-lg border border-border bg-background p-4 sm:grid-cols-[1fr_auto]"

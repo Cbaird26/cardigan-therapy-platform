@@ -11,6 +11,19 @@ const blockedMetadataKeys = [
   "concerns",
 ];
 
+const blockedNotificationTerms = [
+  "adhd",
+  "anxiety",
+  "client",
+  "depression",
+  "diagnosis",
+  "panic",
+  "session",
+  "symptom",
+  "therapist",
+  "trauma",
+];
+
 export function assertNoPhiMetadata(metadata: Record<string, unknown>) {
   const keys = Object.keys(metadata);
   const blocked = keys.filter((key) => blockedMetadataKeys.includes(key));
@@ -29,6 +42,28 @@ export function safeBillingMetadata(input: { membershipId: string; planCode: str
 
   assertNoPhiMetadata(metadata);
   return metadata;
+}
+
+export function assertSafeNotificationText(message: string) {
+  const lower = message.toLowerCase();
+  const blocked = blockedNotificationTerms.filter((term) => lower.includes(term));
+  const hasEmail = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(message);
+
+  if (blocked.length > 0 || hasEmail) {
+    throw new Error("Notification text cannot include PHI, clinical details, or direct identifiers.");
+  }
+}
+
+export function createSafeNotification(input: { purpose: "intake-received" | "secure-update" }) {
+  const notification = {
+    purpose: input.purpose,
+    subject: "Cardigan secure update",
+    body: "You have a secure Cardigan update. Sign in to the portal to review it.",
+  };
+
+  assertSafeNotificationText(notification.subject);
+  assertSafeNotificationText(notification.body);
+  return notification;
 }
 
 export function redactForLogs(value: unknown): unknown {
@@ -57,9 +92,12 @@ export function createAuditEvent(input: {
   action: string;
   resourceType: string;
   resourceId?: string;
+  metadata?: Record<string, unknown>;
+  ipAddress?: string;
 }) {
   return {
     ...input,
+    metadata: input.metadata ? redactForLogs(input.metadata) : undefined,
     createdAt: new Date().toISOString(),
   };
 }

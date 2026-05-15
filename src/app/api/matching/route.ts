@@ -1,14 +1,14 @@
-import { apiError, ok } from "@/lib/api";
+import { apiError, ok, parseRequestData } from "@/lib/api";
+import { getLaunchProviders } from "@/lib/clinical-store";
 import { computeMatchCandidates } from "@/lib/matching";
-import { providers } from "@/lib/mock-data";
 import { intakeSchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
   try {
-    const intake = intakeSchema.parse(await request.json());
+    const intake = intakeSchema.parse(await parseRequestData(request));
 
     return ok({
-      candidates: computeMatchCandidates(intake, providers),
+      candidates: computeMatchCandidates(intake, getLaunchProviders()),
       rules: [
         "Florida client location required for pilot",
         "Provider must hold an active Florida license",

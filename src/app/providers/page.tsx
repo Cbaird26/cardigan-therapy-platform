@@ -14,7 +14,7 @@ export default function ProvidersPage() {
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <SectionHeader
             eyebrow="Provider"
-            title="The public demo lists only the real clinical lead."
+            title="The public provider list includes only the real clinical lead."
             copy="The platform remains ready for a curated provider network, but additional clinicians should appear only after credentialing and consent to publish."
           />
           <div className="mt-8 grid gap-4">

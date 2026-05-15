@@ -1,10 +1,19 @@
-import { apiError, ok } from "@/lib/api";
+import { HttpError, apiError, ok, parseRequestData } from "@/lib/api";
+import { getRequestContext, requireApiPermission } from "@/lib/auth";
+import { featureGateMessage, isFeatureEnabled } from "@/lib/features";
 import { createCheckoutSession } from "@/lib/stripe";
 import { checkoutSchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
   try {
-    const checkout = checkoutSchema.parse(await request.json());
+    const context = getRequestContext(request);
+    requireApiPermission(context, "billing:checkout");
+
+    if (!isFeatureEnabled("billing")) {
+      throw new HttpError(403, featureGateMessage("billing"));
+    }
+
+    const checkout = checkoutSchema.parse(await parseRequestData(request));
     const session = await createCheckoutSession(checkout);
 
     return ok({

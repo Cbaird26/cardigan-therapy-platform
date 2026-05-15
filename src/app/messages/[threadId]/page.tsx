@@ -7,7 +7,7 @@ export const metadata = {
 };
 
 export function generateStaticParams() {
-  return [{ threadId: "demo-thread" }];
+  return [{ threadId: "secure-thread" }];
 }
 
 export default async function MessagesPage({
@@ -26,8 +26,8 @@ export default async function MessagesPage({
             Client and therapist messaging
           </h1>
           <p className="mt-3 max-w-3xl leading-7 text-muted">
-            Thread `{threadId}` demonstrates async support, risk scanning, pinned items, and
-            therapist-visible AI entries when consented.
+            Thread `{threadId}` is the secure-message workspace. Real conversations open only after
+            intake consent, admin review, and provider assignment.
           </p>
         </div>
       </section>
@@ -37,29 +37,18 @@ export default async function MessagesPage({
           <Card className="grid min-h-[640px] grid-rows-[auto_1fr_auto]">
             <div className="border-b border-border pb-4">
               <p className="font-semibold">Christopher Michael Baird</p>
-              <p className="text-sm text-muted">Response target: one business day</p>
+              <p className="text-sm text-muted">Messaging opens after match approval</p>
             </div>
 
-            <div className="grid content-start gap-4 py-5">
-              {[
-                ["demo client", "I had a panic spike before work and used the long-exhale skill."],
-                ["therapist", "Good use of the skill. Please pin what happened before the spike so we can map the pattern tomorrow."],
-                ["ai", "Pinned AI skills note: jaw unclench, shoulder drop, inhale four, exhale six."],
-              ].map(([sender, body]) => (
-                <div
-                  className={`max-w-[78%] rounded-lg border p-4 text-sm leading-6 ${
-                    sender === "client"
-                      ? "ml-auto border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-background text-foreground"
-                  }`}
-                  key={body}
-                >
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-[0.12em] opacity-75">
-                    {sender}
-                  </p>
-                  {body}
-                </div>
-              ))}
+            <div className="grid content-center gap-4 py-5 text-center">
+              <div className="mx-auto max-w-md rounded-lg border border-border bg-background p-5">
+                <ShieldCheck aria-hidden className="mx-auto h-6 w-6 text-primary" />
+                <h2 className="mt-3 text-lg font-semibold">No messages yet</h2>
+                <p className="mt-2 text-sm leading-6 text-muted">
+                  Secure message records are created only for matched clients and assigned
+                  providers. Crisis-language scanning and audit logging run before persistence.
+                </p>
+              </div>
             </div>
 
             <form className="grid gap-3 border-t border-border pt-4">
@@ -70,13 +59,15 @@ export default async function MessagesPage({
                 className="cardigan-focus min-h-28 resize-none rounded-lg border border-border bg-background px-3 py-3 text-sm"
                 id="message"
                 placeholder="Write a message for your care team..."
+                disabled
               />
               <button
-                className="cardigan-focus inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-primary bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
+                className="cardigan-focus inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border bg-surface-muted px-4 py-2.5 text-sm font-semibold text-muted"
+                disabled
                 type="button"
               >
                 <Send aria-hidden className="h-4 w-4" />
-                Send safely
+                Locked pending review
               </button>
             </form>
           </Card>

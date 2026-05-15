@@ -11,14 +11,54 @@ const concerns = [
   "life-transitions",
 ] as const;
 
+const checkboxBoolean = z.preprocess((value) => {
+  if (Array.isArray(value)) {
+    return value.some((item) => item === true || item === "true" || item === "on" || item === "1");
+  }
+
+  return value === true || value === "true" || value === "on" || value === "1";
+}, z.boolean());
+
+const requiredCheckbox = checkboxBoolean.refine((value) => value, {
+  message: "Required consent must be accepted",
+});
+
+const stateCode = z
+  .string()
+  .trim()
+  .min(2)
+  .max(12)
+  .transform((value) => value.toUpperCase());
+
+const optionalTrimmed = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.string().trim().min(1).max(120).optional(),
+);
+
+const concernList = z.preprocess(
+  (value) => (typeof value === "string" ? [value] : value),
+  z.array(z.enum(concerns)).min(1).max(6),
+);
+
 export const intakeSchema = z.object({
-  clientState: z.string().length(2).default("FL"),
+  clientState: stateCode.default("FL"),
   ageRange: z.enum(["child", "teen", "adult"]),
-  concerns: z.array(z.enum(concerns)).min(1),
+  concerns: concernList,
   modalityPreference: z.enum(["emdr", "cbt", "dbt", "family", "skills", "unsure"]),
   schedulePreference: z.enum(["weekday", "evening", "weekend", "flexible"]),
-  wantsAiSupport: z.boolean().default(false),
-  consentedToMatch: z.boolean(),
+  wantsAiSupport: checkboxBoolean.default(false),
+  consentedToMatch: checkboxBoolean,
+});
+
+export const onboardingSchema = intakeSchema.extend({
+  email: z.string().trim().email().max(180),
+  legalName: z.string().trim().min(2).max(120),
+  preferredName: optionalTrimmed,
+  phone: optionalTrimmed,
+  acceptedTerms: requiredCheckbox,
+  acceptedPrivacy: requiredCheckbox,
+  acceptedTelehealth: requiredCheckbox,
+  consentedToMatch: requiredCheckbox,
 });
 
 export const aiChatSchema = z.object({

@@ -1,10 +1,43 @@
 import type { UserRole } from "./types";
 
 const permissions: Record<UserRole, string[]> = {
-  client: ["client:read-self", "message:create", "session:join", "ai:chat"],
-  therapist: ["client:read-assigned", "message:create", "session:manage", "note:create"],
-  supervisor: ["client:read-assigned", "provider:supervise", "note:review", "audit:read-limited"],
-  admin: ["client:read-all", "provider:manage", "billing:manage", "audit:read", "match:override"],
+  client: [
+    "assessment:create",
+    "ai:chat",
+    "billing:checkout",
+    "client:read-self",
+    "consent:sign",
+    "intake:create",
+    "message:create",
+    "provider-switch:create",
+    "session:join",
+    "session:request",
+  ],
+  therapist: [
+    "client:read-assigned",
+    "message:create",
+    "note:create",
+    "session:join",
+    "session:manage",
+    "session:request",
+  ],
+  supervisor: [
+    "audit:read-limited",
+    "client:read-assigned",
+    "note:review",
+    "provider:supervise",
+  ],
+  admin: [
+    "audit:read",
+    "billing:checkout",
+    "billing:manage",
+    "client:read-all",
+    "intake:read",
+    "match:override",
+    "provider:manage",
+    "session:manage",
+    "session:request",
+  ],
 };
 
 export function can(role: UserRole, permission: string) {

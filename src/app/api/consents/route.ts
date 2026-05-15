@@ -1,24 +1,16 @@
-import { apiError, ok } from "@/lib/api";
-import { createAuditEvent } from "@/lib/compliance";
+import { apiError, ok, parseRequestData } from "@/lib/api";
+import { getRequestContext, requireApiPermission } from "@/lib/auth";
+import { signConsent } from "@/lib/clinical-store";
 import { consentSchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
   try {
-    const consent = consentSchema.parse(await request.json());
+    const context = getRequestContext(request);
+    requireApiPermission(context, "consent:sign");
+    const consent = consentSchema.parse(await parseRequestData(request));
+    const result = await signConsent(consent, context);
 
-    return ok(
-      {
-        consentId: crypto.randomUUID(),
-        ...consent,
-        signedAt: new Date().toISOString(),
-        audit: createAuditEvent({
-          actorRole: "client",
-          action: "consent.signed",
-          resourceType: "ConsentArtifact",
-        }),
-      },
-      201,
-    );
+    return ok(result, 201);
   } catch (error) {
     return apiError(error);
   }

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { assertNoPhiMetadata, redactForLogs, safeBillingMetadata } from "./compliance";
+import {
+  assertNoPhiMetadata,
+  assertSafeNotificationText,
+  createSafeNotification,
+  redactForLogs,
+  safeBillingMetadata,
+} from "./compliance";
 
 describe("compliance helpers", () => {
   it("rejects PHI-like billing metadata keys", () => {
@@ -29,5 +35,16 @@ describe("compliance helpers", () => {
       email: "[redacted-email]",
       notes: "[redacted]",
     });
+  });
+
+  it("keeps notification text generic", () => {
+    expect(createSafeNotification({ purpose: "intake-received" })).toEqual({
+      purpose: "intake-received",
+      subject: "Cardigan secure update",
+      body: "You have a secure Cardigan update. Sign in to the portal to review it.",
+    });
+    expect(() => assertSafeNotificationText("Your anxiety session is ready")).toThrow(
+      /Notification text/,
+    );
   });
 });

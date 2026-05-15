@@ -1,24 +1,16 @@
-import { apiError, ok } from "@/lib/api";
-import { createAuditEvent } from "@/lib/compliance";
+import { apiError, ok, parseRequestData } from "@/lib/api";
+import { getRequestContext, requireApiPermission } from "@/lib/auth";
+import { createNote } from "@/lib/clinical-store";
 import { noteSchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
   try {
-    const note = noteSchema.parse(await request.json());
+    const context = getRequestContext(request);
+    requireApiPermission(context, "note:create");
+    const note = noteSchema.parse(await parseRequestData(request));
+    const result = await createNote(note, context);
 
-    return ok(
-      {
-        noteId: crypto.randomUUID(),
-        ...note,
-        lockedAt: null,
-        audit: createAuditEvent({
-          actorRole: "therapist",
-          action: "note.created",
-          resourceType: "TherapistNote",
-        }),
-      },
-      201,
-    );
+    return ok(result, 201);
   } catch (error) {
     return apiError(error);
   }

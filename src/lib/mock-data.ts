@@ -10,7 +10,7 @@ export const providers: Provider[] = [
     modalities: ["emdr", "cbt", "dbt", "family", "skills"],
     acceptsMinors: true,
     acceptingClients: true,
-    nextAvailable: "Tomorrow, 4:30 PM ET",
+    nextAvailable: "After intake review",
     sessionStyles: ["Structured", "Trauma-informed", "Skills-forward"],
     bio: "Clear, warm care for kids, teens, adults, and families, with deep experience in EMDR and regulation skills.",
   },
@@ -29,8 +29,8 @@ export const defaultIntake: IntakeProfile = {
 export const dashboardMetrics = [
   { label: "Real listed clinicians", value: "1", delta: "Christopher Michael Baird" },
   { label: "Launch region", value: "FL", delta: "Pilot state" },
-  { label: "Vendor mode", value: "Demo", delta: "No PHI enabled" },
-  { label: "Safety tests", value: "14", delta: "Passing locally" },
+  { label: "Vendor mode", value: "Gated", delta: "No PHI vendor calls until approval" },
+  { label: "Data mode", value: "Prisma-ready", delta: "Memory fallback outside production" },
 ];
 
 export const membershipPlans = [

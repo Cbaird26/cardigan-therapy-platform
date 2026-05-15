@@ -50,8 +50,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-2">
-            <ButtonLink href="/messages/demo-thread" icon={MessageSquareText} variant="secondary">
-              Message
+            <ButtonLink href="/client" icon={MessageSquareText} variant="secondary">
+              Portal
             </ButtonLink>
             <ButtonLink href="/start" icon={Sparkles}>Begin</ButtonLink>
           </div>

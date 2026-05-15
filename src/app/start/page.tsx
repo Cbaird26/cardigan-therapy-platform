@@ -1,5 +1,4 @@
 import {
-  ArrowRight,
   Brain,
   CheckCircle2,
   ClipboardCheck,
@@ -7,9 +6,10 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { SiteShell } from "@/components/site-shell";
-import { ButtonLink, Card, SectionHeader, StatusPill } from "@/components/ui";
+import { Card, SectionHeader, StatusPill } from "@/components/ui";
 import { computeMatchCandidates } from "@/lib/matching";
 import { defaultIntake, providers } from "@/lib/mock-data";
+import { IntakeForm } from "./intake-form";
 
 export const metadata = {
   title: "Start Intake",
@@ -47,70 +47,7 @@ export default function StartPage() {
           </div>
 
           <Card>
-            <form className="grid gap-5" action="/api/onboarding" method="post">
-              <div className="grid gap-2">
-                <label className="text-sm font-semibold" htmlFor="state">
-                  State at time of session
-                </label>
-                <select
-                  className="cardigan-focus rounded-lg border border-border bg-background px-3 py-3"
-                  defaultValue="FL"
-                  id="state"
-                  name="clientState"
-                >
-                  <option value="FL">Florida</option>
-                  <option value="OUT">Outside Florida</option>
-                </select>
-              </div>
-
-              <fieldset className="grid gap-2">
-                <legend className="text-sm font-semibold">Age range</legend>
-                <div className="grid gap-2 sm:grid-cols-3">
-                  {["child", "teen", "adult"].map((age) => (
-                    <label
-                      className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-3 text-sm"
-                      key={age}
-                    >
-                      <input defaultChecked={age === "adult"} name="ageRange" type="radio" value={age} />
-                      {age}
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-
-              <fieldset className="grid gap-2">
-                <legend className="text-sm font-semibold">What should care focus on?</legend>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {["anxiety", "trauma", "stress", "family", "adhd", "life-transitions"].map(
-                    (concern) => (
-                      <label
-                        className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-3 text-sm"
-                        key={concern}
-                      >
-                        <input
-                          defaultChecked={["anxiety", "trauma", "stress"].includes(concern)}
-                          name="concerns"
-                          type="checkbox"
-                          value={concern}
-                        />
-                        {concern}
-                      </label>
-                    ),
-                  )}
-                </div>
-              </fieldset>
-
-              <label className="flex items-start gap-3 rounded-lg border border-border bg-background px-3 py-3 text-sm">
-                <input defaultChecked name="consentedToMatch" type="checkbox" value="true" />
-                <span>
-                  I consent to Cardigan using these answers to generate a provider match shortlist.
-                </span>
-              </label>
-
-              <ButtonLink href="/client" icon={ArrowRight}>
-                Continue to care room
-              </ButtonLink>
-            </form>
+            <IntakeForm />
           </Card>
         </div>
       </section>
@@ -118,9 +55,9 @@ export default function StartPage() {
       <section className="bg-surface py-12">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <SectionHeader
-            eyebrow="Demo shortlist"
+            eyebrow="Match shortlist"
             title="Example match from the real provider list"
-            copy="The API uses the same scoring function shown here. The demo currently returns only Christopher because no other clinicians have been added."
+            copy="The API uses the same scoring function shown here. It returns only Christopher because no other clinicians have been credentialed for v1."
           />
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             {matches.map((match) => (

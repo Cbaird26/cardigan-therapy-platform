@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ComponentType, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ComponentType, ReactNode } from "react";
 
 type Icon = ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
 
@@ -31,6 +31,37 @@ export function ButtonLink({
       {Icon ? <Icon aria-hidden className="h-4 w-4 shrink-0" /> : null}
       <span>{children}</span>
     </Link>
+  );
+}
+
+export function Button({
+  children,
+  icon: Icon,
+  variant = "primary",
+  className = "",
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  children: ReactNode;
+  icon?: Icon;
+  variant?: "primary" | "secondary" | "ghost";
+}) {
+  const variantClassName = {
+    primary:
+      "bg-primary text-primary-foreground border-primary hover:bg-[#244b40]",
+    secondary:
+      "bg-surface text-foreground border-border hover:bg-surface-muted",
+    ghost:
+      "bg-transparent text-foreground border-transparent hover:bg-surface-muted",
+  }[variant];
+
+  return (
+    <button
+      className={`cardigan-focus inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${variantClassName} ${className}`}
+      {...props}
+    >
+      {Icon ? <Icon aria-hidden className="h-4 w-4 shrink-0" /> : null}
+      <span>{children}</span>
+    </button>
   );
 }
 

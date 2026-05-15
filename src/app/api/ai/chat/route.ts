@@ -1,26 +1,45 @@
-import { apiError, ok } from "@/lib/api";
+import { apiError, ok, parseRequestData } from "@/lib/api";
+import { buildAiSafetyResponse } from "@/lib/ai-safety";
+import { getRequestContext, requireApiPermission } from "@/lib/auth";
 import { generateGuardedAiReply } from "@/lib/bedrock";
-import { createAuditEvent } from "@/lib/compliance";
+import { recordAiConversation } from "@/lib/clinical-store";
+import { featureGateMessage, isFeatureEnabled } from "@/lib/features";
 import { aiChatSchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
   try {
-    const chat = aiChatSchema.parse(await request.json());
+    const context = getRequestContext(request);
+    requireApiPermission(context, "ai:chat");
+    const chat = aiChatSchema.parse(await parseRequestData(request));
+
+    if (!isFeatureEnabled("ai")) {
+      const safety = buildAiSafetyResponse(chat.mode, chat.message);
+      const stored = await recordAiConversation(chat, context, safety, safety.response);
+
+      return ok({
+        conversationId: stored.conversationId,
+        mode: chat.mode,
+        savedToRecord: false,
+        status: "feature-disabled",
+        reply: safety.escalationRequired ? safety.response : featureGateMessage("ai"),
+        bedrockConfigured: false,
+        safety,
+        storageMode: stored.storageMode,
+      });
+    }
+
     const reply = await generateGuardedAiReply({ mode: chat.mode, message: chat.message });
     const { safety } = reply;
+    const stored = await recordAiConversation(chat, context, safety, reply.text);
 
     return ok({
-      conversationId: crypto.randomUUID(),
+      conversationId: stored.conversationId,
       mode: chat.mode,
-      savedToRecord: chat.consentedToSave && safety.allowed,
+      savedToRecord: stored.savedToRecord,
       reply: reply.text,
       bedrockConfigured: reply.configured,
       safety,
-      audit: createAuditEvent({
-        actorRole: "client",
-        action: safety.escalationRequired ? "ai.escalated" : "ai.responded",
-        resourceType: "AIConversation",
-      }),
+      storageMode: stored.storageMode,
     });
   } catch (error) {
     return apiError(error);

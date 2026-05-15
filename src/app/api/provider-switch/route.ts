@@ -1,24 +1,16 @@
-import { apiError, ok } from "@/lib/api";
-import { createAuditEvent } from "@/lib/compliance";
+import { apiError, ok, parseRequestData } from "@/lib/api";
+import { getRequestContext, requireApiPermission } from "@/lib/auth";
+import { requestProviderSwitch } from "@/lib/clinical-store";
 import { providerSwitchSchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
   try {
-    const switchRequest = providerSwitchSchema.parse(await request.json());
+    const context = getRequestContext(request);
+    requireApiPermission(context, "provider-switch:create");
+    const switchRequest = providerSwitchSchema.parse(await parseRequestData(request));
+    const result = await requestProviderSwitch(switchRequest, context);
 
-    return ok(
-      {
-        switchRequestId: crypto.randomUUID(),
-        ...switchRequest,
-        status: "admin-review",
-        audit: createAuditEvent({
-          actorRole: "client",
-          action: "provider_switch.requested",
-          resourceType: "ProviderSwitchRequest",
-        }),
-      },
-      201,
-    );
+    return ok(result, 201);
   } catch (error) {
     return apiError(error);
   }

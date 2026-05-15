@@ -14,3 +14,17 @@ test("public platform routes expose the core workflow", async ({ page }) => {
   await page.goto("/admin");
   await expect(page.getByRole("heading", { name: /operations, compliance/i })).toBeVisible();
 });
+
+test("real intake form submits for admin review", async ({ page }, testInfo) => {
+  await page.goto("/start");
+
+  await page.getByLabel("Legal name").fill("Playwright Client");
+  await page
+    .getByLabel("Email")
+    .fill(`playwright-${testInfo.project.name.toLowerCase()}@example.test`);
+
+  await page.getByRole("button", { name: /submit for review/i }).click();
+
+  await expect(page.getByText(/intake received for admin review/i)).toBeVisible();
+  await expect(page.locator("form").getByText("Christopher Michael Baird")).toBeVisible();
+});

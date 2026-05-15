@@ -162,7 +162,7 @@ export default function Home() {
           <SectionHeader
             eyebrow="Provider profile"
             title="One real clinician listed, with network-ready matching."
-            copy="The current public demo lists Christopher Michael Baird only. The data model still supports additional verified clinicians after credential review."
+            copy="The public provider list shows Christopher Michael Baird only. The data model still supports additional verified clinicians after credential review."
           />
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {providers.map((provider) => (
@@ -197,8 +197,8 @@ export default function Home() {
         <div className="mx-auto grid max-w-7xl gap-8 px-4 md:grid-cols-4 md:px-6">
           {[
             [LockKeyhole, "Cognito-authenticated roles"],
-            [Video, "Daily private video rooms"],
-            [Brain, "Bedrock guarded AI companion"],
+            [Video, "Daily rooms gated for BAA review"],
+            [Brain, "Bedrock AI gated for clinical review"],
             [CalendarClock, "Scheduling and provider switching"],
           ].map(([Icon, label]) => (
             <div className="rounded-lg border border-white/20 p-5" key={label as string}>

@@ -1,10 +1,9 @@
 import {
   Brain,
-  CalendarClock,
   CheckCircle2,
   ClipboardList,
+  FileCheck2,
   MessageSquareText,
-  Video,
 } from "lucide-react";
 import { SiteShell } from "@/components/site-shell";
 import { ButtonLink, Card, SectionHeader, StatusPill } from "@/components/ui";
@@ -19,21 +18,21 @@ export default function ClientPage() {
       <section className="border-b border-border bg-background py-10">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 md:grid-cols-[1fr_0.42fr] md:px-6">
           <div>
-            <StatusPill tone="success">Membership active</StatusPill>
+            <StatusPill tone="warning">Intake review</StatusPill>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">
               Your Cardigan care room
             </h1>
             <p className="mt-3 max-w-3xl leading-7 text-muted">
-              A focused home for your match, next session, messages, goals, assessments, and
-              consented AI support between appointments.
+              A focused home for intake status, consent records, match review, messages, and
+              scheduling once the clinical/admin review is complete.
             </p>
           </div>
           <div className="flex flex-wrap items-end gap-3 md:justify-end">
-            <ButtonLink href="/session/demo-session" icon={Video}>
-              Join session
+            <ButtonLink href="/start" icon={FileCheck2}>
+              Update intake
             </ButtonLink>
-            <ButtonLink href="/messages/demo-thread" icon={MessageSquareText} variant="secondary">
-              Open messages
+            <ButtonLink href="/messages/secure-thread" icon={MessageSquareText} variant="secondary">
+              Secure thread
             </ButtonLink>
           </div>
         </div>
@@ -50,9 +49,9 @@ export default function ClientPage() {
             </p>
             <div className="mt-5 grid gap-3">
               {[
-                ["Next live session", "Tomorrow, 4:30 PM ET", CalendarClock],
-                ["Message response target", "Within one business day", MessageSquareText],
-                ["Current goals", "Stabilize sleep, reduce panic spikes", ClipboardList],
+                ["Review status", "Admin review before membership activation", FileCheck2],
+                ["Messaging", "Available after match approval", MessageSquareText],
+                ["Current goals", "Captured during first clinical review", ClipboardList],
               ].map(([label, value, Icon]) => (
                 <div className="flex gap-3 rounded-lg border border-border bg-background p-3" key={label as string}>
                   <Icon aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
@@ -70,11 +69,11 @@ export default function ClientPage() {
               <Brain aria-hidden className="h-6 w-6 text-primary" />
               <h3 className="mt-4 text-xl font-semibold">AI skills coach</h3>
               <p className="mt-2 text-sm leading-6 text-muted">
-                Use intake guide, skills coach, or between-session support. Saved items require
-                consent and remain therapist-reviewable.
+                Disabled for launch until BAAs, guardrails, therapist visibility, and clinical/legal
+                review are complete.
               </p>
               <div className="mt-4">
-                <StatusPill tone="warning">Not emergency support</StatusPill>
+                <StatusPill tone="warning">Feature gated</StatusPill>
               </div>
             </Card>
 
@@ -83,9 +82,9 @@ export default function ClientPage() {
               <h3 className="mt-4 text-xl font-semibold">This week</h3>
               <ul className="mt-3 grid gap-3 text-sm text-muted">
                 {[
-                  "Complete PHQ-9 and GAD-7 check-in",
-                  "Pin one journal entry for session review",
-                  "Confirm live-session camera and room privacy",
+                  "Submit or update the Florida intake",
+                  "Complete required consent gates",
+                  "Wait for admin review before messaging or scheduling",
                 ].map((item) => (
                   <li className="flex gap-2" key={item}>
                     <CheckCircle2 aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-primary" />

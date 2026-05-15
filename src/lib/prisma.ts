@@ -1,15 +1,30 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
 };
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+function createPrismaClient() {
+  const adapter = new PrismaPg({
+    connectionString:
+      process.env.DATABASE_URL ??
+      "postgresql://cardigan:cardigan@localhost:5432/cardigan",
   });
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+  return new PrismaClient({
+    adapter,
+    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+  });
 }
+
+export function getPrisma() {
+  globalForPrisma.prisma ??= createPrismaClient();
+  return globalForPrisma.prisma;
+}
+
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, property) {
+    return getPrisma()[property as keyof PrismaClient];
+  },
+});

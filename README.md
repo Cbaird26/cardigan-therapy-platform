@@ -9,7 +9,7 @@ The app is BetterHelp-inspired but original: Cardigan branding, Florida-first ma
 - Public routes: `/`, `/start`, `/pricing`, `/providers`, `/groups`
 - Role routes: `/client`, `/provider`, `/admin`
 - Care routes: `/session/:id`, `/messages/:threadId`
-- API routes for intake, matching, checkout, Stripe webhook idempotency, Daily room creation, messages, AI chat, consents, assessments, notes, and audit export
+- API routes for persisted intake, matching, consent signing, admin review, role-aware dashboards, provider switching, secure messages, session requests, checkout gating, Stripe webhook idempotency, AI safety routing, assessments, notes, and audit export
 - Prisma schema for the core platform entities
 - Unit tests for matching, role access, consent gates, Stripe webhook idempotency, Daily room naming, AI safety, and PHI metadata checks
 - AWS CDK scaffold for Cognito, KMS, S3, Aurora Postgres, CloudTrail, and audit logs
@@ -56,6 +56,8 @@ Optional infrastructure synthesis:
 npm run cdk:synth
 ```
 
+Advertising guardrails are documented in `docs/advertising-readiness.md`.
+
 ## Environment
 
 Copy `.env.example` to `.env.local` for local work.
@@ -65,6 +67,9 @@ Production PHI use requires signed BAAs and legal/clinical approval before enabl
 Required production decisions:
 
 - `DATABASE_URL`: Aurora/RDS Postgres connection string
+- `CARDIGAN_DATA_STORE`: use `prisma` for server-backed environments and `memory` only for local demos/tests
+- `CARDIGAN_REQUIRE_DATABASE`: set to `true` in production so DB failures do not fall back to memory
+- `CARDIGAN_ENABLE_BILLING`, `CARDIGAN_ENABLE_VIDEO`, `CARDIGAN_ENABLE_AI`: keep `false` until vendor BAAs, approvals, and legal/clinical review are complete
 - `STRIPE_SECRET_KEY`: Stripe account approved for the intended telehealth billing use
 - `DAILY_API_KEY` and `DAILY_DOMAIN`: Daily Healthcare/HIPAA account
 - `AWS_REGION` and `BEDROCK_MODEL_ID`: AWS Bedrock model in an approved account/region
