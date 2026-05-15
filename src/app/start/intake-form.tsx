@@ -20,6 +20,8 @@ type OnboardingResult = {
   storageMode: "memory" | "prisma";
 };
 
+const isStaticPreview = process.env.NEXT_PUBLIC_CARDIGAN_STATIC_PREVIEW === "true";
+
 export function IntakeForm() {
   const [result, setResult] = useState<OnboardingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +31,14 @@ export function IntakeForm() {
     event.preventDefault();
     setError(null);
     setResult(null);
+
+    if (isStaticPreview) {
+      setError(
+        "This GitHub Pages preview cannot save intake data. Use the AWS production app once deployed, or run the local Next.js app for testing.",
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
     const form = new FormData(event.currentTarget);
@@ -55,6 +65,14 @@ export function IntakeForm() {
         headers: { "content-type": "application/json" },
         method: "POST",
       });
+      const contentType = response.headers.get("content-type") ?? "";
+
+      if (!contentType.includes("application/json")) {
+        throw new Error(
+          "This page is not connected to the intake API. Use the AWS production app once deployed, or run the local Next.js app for testing.",
+        );
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
@@ -75,6 +93,18 @@ export function IntakeForm() {
 
   return (
     <form className="grid gap-5" onSubmit={submitIntake}>
+      {isStaticPreview ? (
+        <div className="rounded-lg border border-[#d6b369] bg-[#f5ead2] p-4 text-sm text-[#6c4b13]">
+          <div className="flex items-start gap-2">
+            <ShieldAlert aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>
+              Public preview only. GitHub Pages cannot run the intake API, database, auth, or audit
+              trail, so this form is disabled for real submissions.
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
           <label className="text-sm font-semibold" htmlFor="legalName">
@@ -239,8 +269,8 @@ export function IntakeForm() {
         ))}
       </div>
 
-      <Button disabled={isSubmitting} icon={ArrowRight} type="submit">
-        {isSubmitting ? "Submitting" : "Submit for review"}
+      <Button disabled={isSubmitting || isStaticPreview} icon={ArrowRight} type="submit">
+        {isSubmitting ? "Submitting" : isStaticPreview ? "Preview only" : "Submit for review"}
       </Button>
 
       {error ? (

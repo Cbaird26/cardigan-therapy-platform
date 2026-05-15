@@ -41,6 +41,7 @@ execFileSync("npx", ["next", "build"], {
   cwd: work,
   env: {
     ...process.env,
+    NEXT_PUBLIC_CARDIGAN_STATIC_PREVIEW: "true",
     STATIC_EXPORT: "true",
   },
   stdio: "inherit",

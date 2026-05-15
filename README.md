@@ -35,6 +35,7 @@ npm run build:pages
 GitHub Pages can host the public/client/provider/admin demo screens, but it cannot run
 the Next.js API routes. For production PHI, messaging, payments, Daily video, Bedrock AI,
 and database-backed workflows, deploy the app to a server-capable HIPAA-ready platform.
+The Pages build marks intake as preview-only and disables real submissions.
 
 ## Verification
 
