@@ -35,7 +35,7 @@ export function IntakeForm() {
 
     if (isStaticPreview) {
       setError(
-        "This GitHub Pages preview cannot save intake data. Use the AWS production app once deployed, or run the local Next.js app for testing.",
+        "This public page accepts starter deposits only. Complete clinical intake through the approved secure workflow.",
       );
       return;
     }
@@ -70,7 +70,7 @@ export function IntakeForm() {
 
       if (!contentType.includes("application/json")) {
         throw new Error(
-          "This page is not connected to the intake API. Use the AWS production app once deployed, or run the local Next.js app for testing.",
+          "This page is not connected to the secure intake API. Use the approved private workflow for clinical intake.",
         );
       }
 
@@ -95,15 +95,15 @@ export function IntakeForm() {
   if (isStaticPreview) {
     return (
       <div className="grid gap-5">
-        <div className="grid gap-4 rounded-lg border border-[#d6b369] bg-[#f5ead2] p-5 text-sm text-[#6c4b13]">
+        <div className="grid gap-4 rounded-lg border border-[#8db69d] bg-[#e7f2ea] p-5 text-sm text-[#25543b]">
           <div className="flex items-start gap-2">
-            <ShieldAlert aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
+            <CheckCircle2 aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
-              <p className="font-semibold">Public preview only</p>
+              <p className="font-semibold">Online starter step is live</p>
               <p className="mt-1 leading-6">
-                GitHub Pages cannot run the intake API, database, auth, or audit trail, so it
-                cannot accept real intake submissions. Use the starter deposit below for
-                onboarding coordination without entering clinical details in Stripe.
+                Use this secure Stripe link to reserve the starter deposit for onboarding
+                coordination. Keep payment fields generic: no symptoms, diagnoses, session notes,
+                or clinical details.
               </p>
             </div>
           </div>
@@ -118,16 +118,16 @@ export function IntakeForm() {
         </div>
 
         <div className="rounded-lg border border-border bg-background p-5">
-          <p className="text-sm font-semibold text-foreground">Secure intake status</p>
+          <p className="text-sm font-semibold text-foreground">What happens next</p>
           <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted">
             <li className="flex gap-2">
               <CheckCircle2 aria-hidden className="mt-1 h-4 w-4 shrink-0 text-primary" />
-              Public payment is live through a generic Stripe starter deposit.
+              Your starter deposit is processed through a generic Cardigan Stripe product.
             </li>
             <li className="flex gap-2">
               <CheckCircle2 aria-hidden className="mt-1 h-4 w-4 shrink-0 text-primary" />
-              Real clinical intake opens on the AWS production app after database, auth, and audit
-              logging are deployed.
+              Clinical details are collected only through the private secure intake workflow, not
+              through Stripe or public pages.
             </li>
             <li className="flex gap-2">
               <CheckCircle2 aria-hidden className="mt-1 h-4 w-4 shrink-0 text-primary" />

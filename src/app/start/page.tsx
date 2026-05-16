@@ -15,8 +15,23 @@ export const metadata = {
   title: "Start Intake",
 };
 
+const isStaticPreview = process.env.NEXT_PUBLIC_CARDIGAN_STATIC_PREVIEW === "true";
+
 export default function StartPage() {
   const matches = computeMatchCandidates(defaultIntake, providers).slice(0, 3);
+  const startSteps = isStaticPreview
+    ? [
+        ["Starter deposit", ShieldCheck],
+        ["No clinical details in Stripe", ShieldCheck],
+        ["Secure follow-up", ClipboardCheck],
+        ["Christopher-only Florida pilot", MapPin],
+      ]
+    : [
+        ["Florida location check", MapPin],
+        ["Telehealth and payment consent gates", ShieldCheck],
+        ["AI companion opt-in", Brain],
+        ["Provider match shortlist", ClipboardCheck],
+      ];
 
   return (
     <SiteShell>
@@ -25,16 +40,19 @@ export default function StartPage() {
           <div>
             <SectionHeader
               eyebrow="Start"
-              title="A clean intake that turns needs into safe matching signals."
-              copy="This v1 intake avoids free-text PHI collection where possible, captures consent, and routes only eligible Florida clients into matching."
+              title={
+                isStaticPreview
+                  ? "Start with a privacy-safe first step."
+                  : "A clean intake that turns needs into safe matching signals."
+              }
+              copy={
+                isStaticPreview
+                  ? "Reserve the starter deposit through Stripe, then complete secure clinical intake only through the approved private workflow. Do not enter symptoms, diagnoses, or session details in payment fields."
+                  : "This v1 intake avoids free-text PHI collection where possible, captures consent, and routes only eligible Florida clients into matching."
+              }
             />
             <div className="mt-6 grid gap-3">
-              {[
-                ["Florida location check", MapPin],
-                ["Telehealth and payment consent gates", ShieldCheck],
-                ["AI companion opt-in", Brain],
-                ["Provider match shortlist", ClipboardCheck],
-              ].map(([label, Icon]) => (
+              {startSteps.map(([label, Icon]) => (
                 <div
                   className="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3"
                   key={label as string}

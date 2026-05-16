@@ -87,8 +87,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
             ))}
           </div>
           <p className="leading-6">
-            Production use requires signed BAAs, clinical/legal review, and vendor approval before
-            collecting PHI, payments, or AI conversations.
+            Public pages and the starter-deposit path are live. Clinical information is handled
+            only through approved secure workflows and never through public payment fields.
           </p>
         </div>
       </footer>
