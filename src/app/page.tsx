@@ -4,6 +4,7 @@ import {
   CalendarClock,
   CheckCircle2,
   ClipboardList,
+  CreditCard,
   LockKeyhole,
   MessageSquareText,
   ShieldCheck,
@@ -16,6 +17,7 @@ import { SiteShell } from "@/components/site-shell";
 import { ButtonLink, Card, SectionHeader, StatusPill } from "@/components/ui";
 import { dashboardMetrics, membershipPlans, providers } from "@/lib/mock-data";
 import { publicPath } from "@/lib/public-path";
+import { starterDeposit } from "@/lib/revenue";
 
 const workflow = [
   {
@@ -56,6 +58,9 @@ export default function Home() {
               between appointments.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
+              <ButtonLink href={starterDeposit.paymentUrl} icon={CreditCard}>
+                {starterDeposit.label}
+              </ButtonLink>
               <ButtonLink href="/start" icon={Sparkles}>
                 Start intake
               </ButtonLink>
@@ -64,7 +69,7 @@ export default function Home() {
               </ButtonLink>
             </div>
             <div className="mt-8 grid gap-3 text-sm text-muted sm:grid-cols-3">
-              {["No insurance claims in v1", "No PHI in Stripe or logs", "Daily rooms never recorded"].map(
+              {["No insurance claims in v1", "No clinical details in Stripe", "Daily rooms never recorded"].map(
                 (item) => (
                   <span className="flex items-center gap-2" key={item}>
                     <CheckCircle2 aria-hidden className="h-4 w-4 text-primary" />
@@ -141,9 +146,24 @@ export default function Home() {
           <SectionHeader
             eyebrow="Care model"
             title="Membership care with integrated clinical boundaries."
-            copy="Plans are generic billing products. Clinical details stay inside the platform record and audit trail, never in payment metadata, video room names, or notification copy."
+            copy={`${starterDeposit.productName} is available as a generic ${starterDeposit.amount} starter payment. Clinical details stay out of Stripe, payment metadata, video room names, and notification copy.`}
           />
           <div className="grid gap-4">
+            <Card className="grid gap-4 border-[#8db69d] bg-[#e7f2ea] sm:grid-cols-[1fr_auto]">
+              <div>
+                <p className="text-lg font-semibold">{starterDeposit.productName}</p>
+                <p className="mt-2 text-sm leading-6 text-[#25543b]">
+                  Generic starter deposit for onboarding coordination. Do not enter symptoms,
+                  diagnoses, session notes, or clinical details in Stripe.
+                </p>
+              </div>
+              <div className="grid gap-3 sm:justify-items-end">
+                <p className="text-2xl font-semibold text-primary">{starterDeposit.amount}</p>
+                <ButtonLink href={starterDeposit.paymentUrl} icon={CreditCard}>
+                  Pay deposit
+                </ButtonLink>
+              </div>
+            </Card>
             {membershipPlans.map((plan) => (
               <Card className="grid gap-4 sm:grid-cols-[1fr_auto]" key={plan.code}>
                 <div>

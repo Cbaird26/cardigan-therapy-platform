@@ -7,6 +7,7 @@ Advertising starts only after the real intake MVP passes testing, clinical/legal
 - Public landing pages for Cardigan Incorporated, Florida telehealth availability, therapy support, EMDR availability, and family support.
 - Google Business Profile, local SEO, and search ads pointed at public pages only.
 - Generic conversion events such as `consult_request_started` and `consult_request_completed` without names, emails, concerns, diagnoses, session details, or provider notes.
+- Generic starter-deposit payments through Stripe Payment Links, with no symptoms, diagnoses, notes, or clinical details in Stripe fields.
 
 ## Not Allowed Before Legal Approval
 

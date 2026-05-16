@@ -2,7 +2,8 @@
 
 import { ArrowRight, CheckCircle2, ShieldAlert } from "lucide-react";
 import { FormEvent, useState } from "react";
-import { Button, StatusPill } from "@/components/ui";
+import { Button, ButtonLink, StatusPill } from "@/components/ui";
+import { starterDeposit } from "@/lib/revenue";
 
 type OnboardingResult = {
   clientId: string;
@@ -94,13 +95,21 @@ export function IntakeForm() {
   return (
     <form className="grid gap-5" onSubmit={submitIntake}>
       {isStaticPreview ? (
-        <div className="rounded-lg border border-[#d6b369] bg-[#f5ead2] p-4 text-sm text-[#6c4b13]">
+        <div className="grid gap-4 rounded-lg border border-[#d6b369] bg-[#f5ead2] p-4 text-sm text-[#6c4b13]">
           <div className="flex items-start gap-2">
             <ShieldAlert aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
             <p>
               Public preview only. GitHub Pages cannot run the intake API, database, auth, or audit
               trail, so this form is disabled for real submissions.
             </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <ButtonLink href={starterDeposit.paymentUrl} icon={ArrowRight}>
+              {starterDeposit.label}
+            </ButtonLink>
+            <span className="text-xs font-semibold">
+              {starterDeposit.amount} generic deposit. Do not enter clinical details in Stripe.
+            </span>
           </div>
         </div>
       ) : null}

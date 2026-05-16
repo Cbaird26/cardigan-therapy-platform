@@ -2,6 +2,7 @@ import { CreditCard, PauseCircle, RefreshCcw, ShieldCheck } from "lucide-react";
 import { SiteShell } from "@/components/site-shell";
 import { ButtonLink, Card, SectionHeader, StatusPill } from "@/components/ui";
 import { membershipPlans } from "@/lib/mock-data";
+import { starterDeposit } from "@/lib/revenue";
 
 export const metadata = {
   title: "Pricing",
@@ -17,6 +18,23 @@ export default function PricingPage() {
             title="Simple self-pay plans for the Florida pilot."
             copy="Stripe Billing is isolated from PHI. Plans use generic product names, generic descriptors, and membership IDs only."
           />
+          <Card className="mt-8 grid gap-5 border-[#8db69d] bg-[#e7f2ea] md:grid-cols-[1fr_auto]">
+            <div>
+              <StatusPill tone="success">Available now</StatusPill>
+              <h3 className="mt-3 text-2xl font-semibold">{starterDeposit.productName}</h3>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-[#25543b]">
+                A generic {starterDeposit.amount} starter payment for onboarding coordination. Do
+                not enter symptoms, diagnoses, session notes, or clinical details in Stripe.
+              </p>
+            </div>
+            <div className="grid content-center gap-3 md:justify-items-end">
+              <p className="text-3xl font-semibold text-primary">{starterDeposit.amount}</p>
+              <ButtonLink href={starterDeposit.paymentUrl} icon={CreditCard}>
+                Pay deposit
+              </ButtonLink>
+            </div>
+          </Card>
+
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {membershipPlans.map((plan) => (
               <Card className="flex flex-col" key={plan.code}>
@@ -29,8 +47,8 @@ export default function PricingPage() {
                 </div>
                 <p className="mt-6 text-4xl font-semibold text-primary">{plan.price}</p>
                 <div className="mt-6">
-                  <ButtonLink href="/start" icon={CreditCard}>
-                    Select plan
+                  <ButtonLink href="/start" icon={CreditCard} variant="secondary">
+                    Request review
                   </ButtonLink>
                 </div>
               </Card>

@@ -35,7 +35,8 @@ npm run build:pages
 GitHub Pages can host the public/client/provider/admin demo screens, but it cannot run
 the Next.js API routes. For production PHI, messaging, payments, Daily video, Bedrock AI,
 and database-backed workflows, deploy the app to a server-capable HIPAA-ready platform.
-The Pages build marks intake as preview-only and disables real submissions.
+The Pages build marks intake as preview-only, disables real intake submissions,
+and links to a generic Cardigan Starter Deposit Stripe Payment Link.
 
 ## Verification
 
@@ -71,6 +72,7 @@ Required production decisions:
 - `CARDIGAN_DATA_STORE`: use `prisma` for server-backed environments and `memory` only for local demos/tests
 - `CARDIGAN_REQUIRE_DATABASE`: set to `true` in production so DB failures do not fall back to memory
 - `CARDIGAN_ENABLE_BILLING`, `CARDIGAN_ENABLE_VIDEO`, `CARDIGAN_ENABLE_AI`: keep `false` until vendor BAAs, approvals, and legal/clinical review are complete
+- `NEXT_PUBLIC_CARDIGAN_PAYMENT_LINK`: public Stripe Payment Link for a generic non-PHI starter deposit
 - `STRIPE_SECRET_KEY`: Stripe account approved for the intended telehealth billing use
 - `DAILY_API_KEY` and `DAILY_DOMAIN`: Daily Healthcare/HIPAA account
 - `AWS_REGION` and `BEDROCK_MODEL_ID`: AWS Bedrock model in an approved account/region

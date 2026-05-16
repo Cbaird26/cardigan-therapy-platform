@@ -22,11 +22,14 @@ export function ButtonLink({
     ghost:
       "bg-transparent text-foreground border-transparent hover:bg-surface-muted",
   }[variant];
+  const isExternal = /^https?:\/\//.test(href);
 
   return (
     <Link
       className={`cardigan-focus inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold no-underline transition ${className}`}
       href={href}
+      rel={isExternal ? "noreferrer" : undefined}
+      target={isExternal ? "_blank" : undefined}
     >
       {Icon ? <Icon aria-hidden className="h-4 w-4 shrink-0" /> : null}
       <span>{children}</span>
