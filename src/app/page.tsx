@@ -61,6 +61,9 @@ export default function Home() {
               <ButtonLink href={starterDeposit.paymentUrl} icon={CreditCard}>
                 {starterDeposit.label}
               </ButtonLink>
+              <ButtonLink href="/start#test-without-payment" icon={ClipboardList} variant="secondary">
+                Test flow free
+              </ButtonLink>
               <ButtonLink href="/start" icon={Sparkles}>
                 Start intake
               </ButtonLink>

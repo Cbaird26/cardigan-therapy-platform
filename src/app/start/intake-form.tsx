@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, ShieldAlert } from "lucide-react";
+import { ArrowRight, CheckCircle2, ClipboardCheck, ShieldAlert } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { Button, ButtonLink, StatusPill } from "@/components/ui";
 import { starterDeposit } from "@/lib/revenue";
@@ -27,6 +27,7 @@ export function IntakeForm() {
   const [result, setResult] = useState<OnboardingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [testComplete, setTestComplete] = useState(false);
 
   async function submitIntake(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -111,15 +112,51 @@ export function IntakeForm() {
             <ButtonLink href={starterDeposit.paymentUrl} icon={ArrowRight}>
               {starterDeposit.label}
             </ButtonLink>
+            <Button
+              className="scroll-mt-24"
+              icon={ClipboardCheck}
+              id="test-without-payment"
+              onClick={() => setTestComplete(true)}
+              type="button"
+              variant="secondary"
+            >
+              Test without payment
+            </Button>
             <span className="text-xs font-semibold">
               {starterDeposit.amount} generic deposit. No symptoms, diagnoses, or session details.
             </span>
           </div>
         </div>
 
+        {testComplete ? (
+          <div className="rounded-lg border border-[#d6b369] bg-[#f5ead2] p-5 text-sm text-[#6c4b13]">
+            <div className="flex items-start gap-2">
+              <ClipboardCheck aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <p className="font-semibold">No-payment test complete</p>
+                <p className="mt-1 leading-6">
+                  This confirms the public start flow renders and can be tested without creating a
+                  Stripe charge. It does not reserve onboarding, collect clinical information, or
+                  create a client record.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <StatusPill tone="warning">test only</StatusPill>
+                  <StatusPill>No charge</StatusPill>
+                  <StatusPill>No PHI collected</StatusPill>
+                  <StatusPill>Christopher-only match preview</StatusPill>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         <div className="rounded-lg border border-border bg-background p-5">
           <p className="text-sm font-semibold text-foreground">What happens next</p>
           <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted">
+            <li className="flex gap-2">
+              <CheckCircle2 aria-hidden className="mt-1 h-4 w-4 shrink-0 text-primary" />
+              Use the no-payment test button to verify the public page without creating a charge.
+            </li>
             <li className="flex gap-2">
               <CheckCircle2 aria-hidden className="mt-1 h-4 w-4 shrink-0 text-primary" />
               Your starter deposit is processed through a generic Cardigan Stripe product.
