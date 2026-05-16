@@ -92,28 +92,55 @@ export function IntakeForm() {
     }
   }
 
-  return (
-    <form className="grid gap-5" onSubmit={submitIntake}>
-      {isStaticPreview ? (
-        <div className="grid gap-4 rounded-lg border border-[#d6b369] bg-[#f5ead2] p-4 text-sm text-[#6c4b13]">
+  if (isStaticPreview) {
+    return (
+      <div className="grid gap-5">
+        <div className="grid gap-4 rounded-lg border border-[#d6b369] bg-[#f5ead2] p-5 text-sm text-[#6c4b13]">
           <div className="flex items-start gap-2">
             <ShieldAlert aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>
-              Public preview only. GitHub Pages cannot run the intake API, database, auth, or audit
-              trail, so this form is disabled for real submissions.
-            </p>
+            <div>
+              <p className="font-semibold">Public preview only</p>
+              <p className="mt-1 leading-6">
+                GitHub Pages cannot run the intake API, database, auth, or audit trail, so it
+                cannot accept real intake submissions. Use the starter deposit below for
+                onboarding coordination without entering clinical details in Stripe.
+              </p>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <ButtonLink href={starterDeposit.paymentUrl} icon={ArrowRight}>
               {starterDeposit.label}
             </ButtonLink>
             <span className="text-xs font-semibold">
-              {starterDeposit.amount} generic deposit. Do not enter clinical details in Stripe.
+              {starterDeposit.amount} generic deposit. No symptoms, diagnoses, or session details.
             </span>
           </div>
         </div>
-      ) : null}
 
+        <div className="rounded-lg border border-border bg-background p-5">
+          <p className="text-sm font-semibold text-foreground">Secure intake status</p>
+          <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted">
+            <li className="flex gap-2">
+              <CheckCircle2 aria-hidden className="mt-1 h-4 w-4 shrink-0 text-primary" />
+              Public payment is live through a generic Stripe starter deposit.
+            </li>
+            <li className="flex gap-2">
+              <CheckCircle2 aria-hidden className="mt-1 h-4 w-4 shrink-0 text-primary" />
+              Real clinical intake opens on the AWS production app after database, auth, and audit
+              logging are deployed.
+            </li>
+            <li className="flex gap-2">
+              <CheckCircle2 aria-hidden className="mt-1 h-4 w-4 shrink-0 text-primary" />
+              Christopher Michael Baird is the only listed clinician for the Florida pilot.
+            </li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form className="grid gap-5" onSubmit={submitIntake}>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
           <label className="text-sm font-semibold" htmlFor="legalName">
@@ -278,8 +305,8 @@ export function IntakeForm() {
         ))}
       </div>
 
-      <Button disabled={isSubmitting || isStaticPreview} icon={ArrowRight} type="submit">
-        {isSubmitting ? "Submitting" : isStaticPreview ? "Preview only" : "Submit for review"}
+      <Button disabled={isSubmitting} icon={ArrowRight} type="submit">
+        {isSubmitting ? "Submitting" : "Submit for review"}
       </Button>
 
       {error ? (
