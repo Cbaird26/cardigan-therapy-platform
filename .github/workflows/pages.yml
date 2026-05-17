@@ -17,6 +17,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SIMPLEPRACTICE_BOOKING_URL: "https://christopher-michael-baird.clientsecure.me/request/prescreener-reason-for-care"
     steps:
       - name: Checkout
         uses: actions/checkout@v4

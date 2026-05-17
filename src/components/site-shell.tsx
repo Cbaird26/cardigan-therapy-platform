@@ -2,7 +2,7 @@ import {
   CalendarClock,
   HeartHandshake,
   LayoutDashboard,
-  MessageSquareText,
+  LogIn,
   ShieldCheck,
   Sparkles,
   Stethoscope,
@@ -10,15 +10,16 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { clinicalBooking } from "@/lib/booking";
 import { ButtonLink } from "./ui";
 
 const navItems = [
-  { href: "/start", label: "Start" },
+  { href: clinicalBooking.href, label: "Booking" },
   { href: "/pricing", label: "Pricing" },
   { href: "/providers", label: "Providers" },
   { href: "/groups", label: "Groups" },
-  { href: "/client", label: "Client" },
-  { href: "/provider", label: "Provider" },
+  { href: clinicalBooking.href, label: "Client portal" },
+  { href: "/provider-login", label: "Provider login" },
   { href: "/admin", label: "Admin" },
 ];
 
@@ -38,22 +39,30 @@ export function SiteShell({ children }: { children: ReactNode }) {
           </Link>
 
           <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
-            {navItems.map((item) => (
-              <Link
-                className="cardigan-focus rounded-lg px-3 py-2 text-sm font-medium text-muted no-underline hover:bg-surface-muted hover:text-foreground"
-                href={item.href}
-                key={item.href}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isExternal = /^https?:\/\//.test(item.href);
+
+              return (
+                <Link
+                  className="cardigan-focus rounded-lg px-3 py-2 text-sm font-medium text-muted no-underline hover:bg-surface-muted hover:text-foreground"
+                  href={item.href}
+                  key={`${item.label}-${item.href}`}
+                  rel={isExternal ? "noreferrer" : undefined}
+                  target={isExternal ? "_blank" : undefined}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
 
           <div className="flex items-center gap-2">
-            <ButtonLink href="/client" icon={MessageSquareText} variant="secondary">
-              Portal
+            <ButtonLink href="/provider-login" icon={LogIn} variant="secondary">
+              Provider login
             </ButtonLink>
-            <ButtonLink href="/start" icon={Sparkles}>Begin</ButtonLink>
+            <ButtonLink href={clinicalBooking.href} icon={Sparkles}>
+              {clinicalBooking.shortLabel}
+            </ButtonLink>
           </div>
         </div>
       </header>
@@ -87,8 +96,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
             ))}
           </div>
           <p className="leading-6">
-            Public pages and the starter-deposit path are live. Clinical information is handled
-            only through approved secure workflows and never through public payment fields.
+            Public pages and the SimplePractice booking path are live. Clinical information is
+            handled only through approved secure workflows and never through public payment fields.
           </p>
         </div>
       </footer>

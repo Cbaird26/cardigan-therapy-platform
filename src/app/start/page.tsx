@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { SiteShell } from "@/components/site-shell";
 import { Card, SectionHeader, StatusPill } from "@/components/ui";
+import { clinicalBooking } from "@/lib/booking";
 import { computeMatchCandidates } from "@/lib/matching";
 import { defaultIntake, providers } from "@/lib/mock-data";
 import { IntakeForm } from "./intake-form";
@@ -21,9 +22,9 @@ export default function StartPage() {
   const matches = computeMatchCandidates(defaultIntake, providers).slice(0, 3);
   const startSteps = isStaticPreview
     ? [
-        ["Starter deposit", ShieldCheck],
-        ["No clinical details in Stripe", ShieldCheck],
-        ["Secure follow-up", ClipboardCheck],
+        [clinicalBooking.isSimplePracticeEnabled ? "SimplePractice booking" : "Starter deposit", ShieldCheck],
+        ["No PHI in public pages", ShieldCheck],
+        ["Secure portal follow-up", ClipboardCheck],
         ["Christopher-only Florida pilot", MapPin],
       ]
     : [
@@ -42,12 +43,12 @@ export default function StartPage() {
               eyebrow="Start"
               title={
                 isStaticPreview
-                  ? "Start with a privacy-safe first step."
+                  ? "Start through the secure clinical portal."
                   : "A clean intake that turns needs into safe matching signals."
               }
               copy={
                 isStaticPreview
-                  ? "Reserve the starter deposit through Stripe, then complete secure clinical intake only through the approved private workflow. Do not enter symptoms, diagnoses, or session details in payment fields."
+                  ? "Request a consult through SimplePractice for client portal registration, booking, payment, and telehealth. Do not enter symptoms, diagnoses, or session details in public payment or ad fields."
                   : "This v1 intake avoids free-text PHI collection where possible, captures consent, and routes only eligible Florida clients into matching."
               }
             />

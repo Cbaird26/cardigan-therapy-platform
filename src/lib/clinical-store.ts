@@ -8,6 +8,8 @@ import {
   createSafeNotification,
   redactForLogs,
 } from "./compliance";
+import { sessionEndsAt } from "./consult-slots";
+import { createSafeDailyRoomName } from "./daily";
 import { computeMatchCandidates } from "./matching";
 import { providers } from "./mock-data";
 import type { MatchCandidate, RiskLevel } from "./types";
@@ -52,10 +54,25 @@ type StoredClient = {
   legalName: string;
   matchedProviderId?: string;
   modalityPreference: string;
+  phone?: string;
   preferredName?: string;
   state: string;
   timezone: string;
   userId: string;
+};
+
+export type IntakeReviewStatus = "submitted" | "reviewed" | "accepted" | "needs-info" | "declined";
+
+type StoredIntake = {
+  answers: ReturnType<typeof intakeAnswers>;
+  clientId: string;
+  consentedToMatch: boolean;
+  createdAt: string;
+  id: string;
+  reviewNote?: string;
+  reviewStatus: IntakeReviewStatus;
+  reviewedAt?: string;
+  status: string;
 };
 
 type StoredThread = {
@@ -65,18 +82,23 @@ type StoredThread = {
   status: "OPEN" | "ESCALATED";
 };
 
+type StoredPracticeRecord = Record<string, unknown> & {
+  providerId?: string;
+  status?: string;
+};
+
 type MemoryState = {
   assessments: Array<Record<string, unknown>>;
   aiConversations: Array<Record<string, unknown>>;
   auditEvents: AuditRecord[];
   consents: Array<Record<string, unknown>>;
-  crisisFlags: Array<Record<string, unknown>>;
-  intakes: Array<Record<string, unknown>>;
+  crisisFlags: StoredPracticeRecord[];
+  intakes: StoredIntake[];
   matchCandidates: Array<Record<string, unknown>>;
   messages: Array<Record<string, unknown>>;
-  notes: Array<Record<string, unknown>>;
+  notes: StoredPracticeRecord[];
   providerSwitches: Array<Record<string, unknown>>;
-  sessions: Array<Record<string, unknown>>;
+  sessions: StoredPracticeRecord[];
   threads: StoredThread[];
   clients: StoredClient[];
 };
@@ -141,6 +163,10 @@ function intakeAnswers(input: OnboardingInput) {
     clientState: input.clientState,
     concerns: input.concerns,
     modalityPreference: input.modalityPreference,
+    requestedSessionStartsAt: input.requestedSessionStartsAt,
+    requestedSessionEndsAt: input.requestedSessionStartsAt
+      ? sessionEndsAt(input.requestedSessionStartsAt)
+      : undefined,
     schedulePreference: input.schedulePreference,
     wantsAiSupport: input.wantsAiSupport,
   };
@@ -305,6 +331,7 @@ export async function submitOnboarding(input: OnboardingInput, context: RequestC
           legalName: input.legalName,
           matchedProviderId: matches[0]?.provider.id,
           modalityPreference: input.modalityPreference,
+          phone: input.phone,
           preferredName: input.preferredName,
           state: input.clientState,
           timezone: "America/New_York",
@@ -315,6 +342,7 @@ export async function submitOnboarding(input: OnboardingInput, context: RequestC
           legalName: input.legalName,
           matchedProviderId: matches[0]?.provider.id,
           modalityPreference: input.modalityPreference,
+          phone: input.phone,
           preferredName: input.preferredName,
           state: input.clientState,
           timezone: "America/New_York",
@@ -327,6 +355,7 @@ export async function submitOnboarding(input: OnboardingInput, context: RequestC
           answers: toPrismaJson(intakeAnswers(input)),
           clientId: client.id,
           consentedToMatch: input.consentedToMatch,
+          reviewStatus: "submitted",
           triageSummary:
             status === "admin-review"
               ? "Florida intake ready for admin review."
@@ -383,6 +412,30 @@ export async function submitOnboarding(input: OnboardingInput, context: RequestC
         ),
       );
 
+      const requestedSession =
+        input.requestedSessionStartsAt && matches[0]
+          ? await prisma.session.create({
+              data: {
+                clientId: client.id,
+                dailyRoomName: createSafeDailyRoomName(`requested-${intake.id}`),
+                endsAt: new Date(sessionEndsAt(input.requestedSessionStartsAt)),
+                providerId: matches[0].provider.id,
+                startsAt: new Date(input.requestedSessionStartsAt),
+                status: "REQUESTED",
+              },
+            })
+          : null;
+
+      if (requestedSession) {
+        await createAuditPrisma({
+          action: "session.requested",
+          context,
+          metadata: { source: "intake_calendar" },
+          resourceId: requestedSession.id,
+          resourceType: "Session",
+        });
+      }
+
       await createAuditPrisma({
         action: "intake.submitted",
         context,
@@ -399,6 +452,7 @@ export async function submitOnboarding(input: OnboardingInput, context: RequestC
         consents,
         storageMode: "prisma" as const,
         notification,
+        requestedSession,
         audit: auditInput({
           action: "intake.submitted",
           context,
@@ -424,6 +478,7 @@ export async function submitOnboarding(input: OnboardingInput, context: RequestC
         legalName: input.legalName,
         matchedProviderId: matches[0]?.provider.id,
         modalityPreference: input.modalityPreference,
+        phone: input.phone,
         preferredName: input.preferredName,
         state: input.clientState,
         timezone: "America/New_York",
@@ -443,6 +498,7 @@ export async function submitOnboarding(input: OnboardingInput, context: RequestC
         clientId,
         consentedToMatch: input.consentedToMatch,
         createdAt: new Date().toISOString(),
+        reviewStatus: "submitted",
         status,
       });
 
@@ -467,6 +523,32 @@ export async function submitOnboarding(input: OnboardingInput, context: RequestC
         });
       }
 
+      const requestedSession =
+        input.requestedSessionStartsAt && matches[0]
+          ? {
+              id: `session_${randomUUID()}`,
+              clientId,
+              providerId: matches[0].provider.id,
+              startsAt: input.requestedSessionStartsAt,
+              endsAt: sessionEndsAt(input.requestedSessionStartsAt),
+              createdAt: new Date().toISOString(),
+              dailyRoomName: "",
+              status: "REQUESTED",
+            }
+          : null;
+
+      if (requestedSession) {
+        requestedSession.dailyRoomName = createSafeDailyRoomName(requestedSession.id);
+        store.sessions.push(requestedSession);
+        createAuditMemory({
+          action: "session.requested",
+          context,
+          metadata: { source: "intake_calendar" },
+          resourceId: requestedSession.id,
+          resourceType: "Session",
+        });
+      }
+
       const audit = createAuditMemory({
         action: "intake.submitted",
         context,
@@ -483,6 +565,7 @@ export async function submitOnboarding(input: OnboardingInput, context: RequestC
         consents,
         storageMode: "memory" as const,
         notification,
+        requestedSession,
         audit,
       };
     },
@@ -913,6 +996,203 @@ export async function exportAuditEvents() {
       generatedAt: new Date().toISOString(),
       storageMode: "memory" as const,
     }),
+  );
+}
+
+export async function getProviderPracticeSnapshot() {
+  return runWithStore(
+    async () => {
+      await ensureChristopherProviderPrisma();
+
+      const [provider, intakes, clients, sessions, notes, crisisFlags] = await Promise.all([
+        prisma.providerProfile.findUnique({
+          where: { id: CLINICAL_LEAD_PROVIDER_ID },
+          select: {
+            acceptingClients: true,
+            credentials: true,
+            id: true,
+            specialties: true,
+            user: { select: { displayName: true, email: true } },
+          },
+        }),
+        prisma.intakeResponse.findMany({
+          include: {
+            client: {
+              select: {
+                ageRange: true,
+                concerns: true,
+                id: true,
+                legalName: true,
+                modalityPreference: true,
+                phone: true,
+                preferredName: true,
+                state: true,
+                user: { select: { email: true } },
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 100,
+        }),
+        prisma.clientProfile.findMany({
+          where: { matchedProviderId: CLINICAL_LEAD_PROVIDER_ID },
+          orderBy: { updatedAt: "desc" },
+          select: {
+            ageRange: true,
+            concerns: true,
+            id: true,
+            legalName: true,
+            phone: true,
+            preferredName: true,
+            state: true,
+            user: { select: { email: true } },
+          },
+        }),
+        prisma.session.findMany({
+          where: { providerId: CLINICAL_LEAD_PROVIDER_ID },
+          include: {
+            client: {
+              select: {
+                id: true,
+                legalName: true,
+                phone: true,
+                preferredName: true,
+                state: true,
+                user: { select: { email: true } },
+              },
+            },
+          },
+          orderBy: { startsAt: "asc" },
+          take: 25,
+        }),
+        prisma.therapistNote.findMany({
+          where: { providerId: CLINICAL_LEAD_PROVIDER_ID },
+          orderBy: { createdAt: "desc" },
+          take: 25,
+        }),
+        prisma.crisisFlag.findMany({
+          where: { status: "OPEN" },
+          orderBy: { createdAt: "desc" },
+          take: 25,
+        }),
+      ]);
+
+      return {
+        provider,
+        intakes,
+        clients,
+        sessions,
+        notes,
+        openRiskFlags: crisisFlags,
+        storageMode: "prisma" as const,
+      };
+    },
+    async () => {
+      const store = memoryStore();
+      const provider = getLaunchProviders()[0];
+      const clients = store.clients.filter((client) => client.matchedProviderId === CLINICAL_LEAD_PROVIDER_ID);
+
+      return {
+        provider: {
+          acceptingClients: provider.acceptingClients,
+          credentials: provider.credentials,
+          id: provider.id,
+          specialties: provider.specialties,
+          user: { displayName: provider.displayName, email: CLINICAL_LEAD_EMAIL },
+        },
+        intakes: [...store.intakes].reverse().map((intake) => {
+          const client = store.clients.find((item) => item.id === intake.clientId);
+          return {
+            ...intake,
+            client: client
+              ? {
+                  ageRange: client.ageRange,
+                  concerns: client.concerns,
+                  id: client.id,
+                  legalName: client.legalName,
+                  modalityPreference: client.modalityPreference,
+                  phone: client.phone,
+                  preferredName: client.preferredName,
+                  state: client.state,
+                  user: { email: client.email },
+                }
+              : undefined,
+          };
+        }),
+        clients,
+        sessions: store.sessions
+          .filter((session) => session.providerId === CLINICAL_LEAD_PROVIDER_ID)
+          .map((session) => {
+            const clientId = typeof session.clientId === "string" ? session.clientId : undefined;
+            const client = store.clients.find((item) => item.id === clientId);
+
+            return {
+              ...session,
+              client: client
+                ? {
+                    id: client.id,
+                    legalName: client.legalName,
+                    phone: client.phone,
+                    preferredName: client.preferredName,
+                    state: client.state,
+                    user: { email: client.email },
+                  }
+                : undefined,
+            };
+          }),
+        notes: store.notes.filter((note) => note.providerId === CLINICAL_LEAD_PROVIDER_ID),
+        openRiskFlags: store.crisisFlags.filter((flag) => flag.status === "OPEN"),
+        storageMode: "memory" as const,
+      };
+    },
+  );
+}
+
+export async function updateIntakeReviewStatus(
+  input: { intakeId: string; reviewNote?: string; status: IntakeReviewStatus },
+  context: RequestContext,
+) {
+  return runWithStore(
+    async () => {
+      const intake = await prisma.intakeResponse.update({
+        where: { id: input.intakeId },
+        data: {
+          reviewNote: input.reviewNote,
+          reviewStatus: input.status,
+          reviewedAt: new Date(),
+        },
+      });
+
+      await createAuditPrisma({
+        action: "intake.review_status_updated",
+        context,
+        metadata: { status: input.status },
+        resourceId: intake.id,
+        resourceType: "IntakeResponse",
+      });
+
+      return { intakeId: intake.id, reviewStatus: intake.reviewStatus, storageMode: "prisma" as const };
+    },
+    async () => {
+      const intake = memoryStore().intakes.find((item) => item.id === input.intakeId);
+
+      if (!intake) {
+        throw new Error("Intake not found.");
+      }
+
+      intake.reviewStatus = input.status;
+      intake.reviewNote = input.reviewNote;
+      intake.reviewedAt = new Date().toISOString();
+      createAuditMemory({
+        action: "intake.review_status_updated",
+        context,
+        metadata: { status: input.status },
+        resourceId: intake.id,
+        resourceType: "IntakeResponse",
+      });
+
+      return { intakeId: intake.id, reviewStatus: intake.reviewStatus, storageMode: "memory" as const };
+    },
   );
 }
 

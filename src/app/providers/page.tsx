@@ -32,10 +32,13 @@ export default function ProvidersPage() {
                   </div>
                   <p className="mt-4 max-w-3xl text-sm leading-6 text-muted">{provider.bio}</p>
                   <div className="mt-5 flex flex-wrap gap-2">
-                    {[...provider.specialties, ...provider.modalities].map((item) => (
+                    {[
+                      ...provider.specialties.map((item) => ({ item, type: "specialty" })),
+                      ...provider.modalities.map((item) => ({ item, type: "modality" })),
+                    ].map(({ item, type }) => (
                       <span
                         className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-muted"
-                        key={item}
+                        key={`${type}-${item}`}
                       >
                         {item}
                       </span>

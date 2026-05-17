@@ -1,11 +1,12 @@
 import { apiError, ok, parseRequestData } from "@/lib/api";
 import { getRequestContext, requireApiPermission } from "@/lib/auth";
 import { createMessage } from "@/lib/clinical-store";
+import { providerSessionContextIfPresent } from "@/lib/provider-auth";
 import { messageSchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
   try {
-    const context = getRequestContext(request);
+    const context = providerSessionContextIfPresent(request) ?? getRequestContext(request);
     requireApiPermission(context, "message:create");
     const message = messageSchema.parse(await parseRequestData(request));
     const result = await createMessage(message, context);

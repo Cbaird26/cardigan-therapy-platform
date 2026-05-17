@@ -1,6 +1,7 @@
-import { CreditCard, PauseCircle, RefreshCcw, ShieldCheck } from "lucide-react";
+import { PauseCircle, RefreshCcw, ShieldCheck, Sparkles } from "lucide-react";
 import { SiteShell } from "@/components/site-shell";
 import { ButtonLink, Card, SectionHeader, StatusPill } from "@/components/ui";
+import { clinicalBooking } from "@/lib/booking";
 import { membershipPlans } from "@/lib/mock-data";
 import { starterDeposit } from "@/lib/revenue";
 
@@ -16,21 +17,22 @@ export default function PricingPage() {
           <SectionHeader
             eyebrow="Membership"
             title="Simple self-pay plans for the Florida pilot."
-            copy="Stripe Billing is isolated from PHI. Plans use generic product names, generic descriptors, and membership IDs only."
+            copy="Tonight's live booking, portal registration, payment, and telehealth path runs through SimplePractice. Stripe remains a generic secondary deposit path only."
           />
           <Card className="mt-8 grid gap-5 border-[#8db69d] bg-[#e7f2ea] md:grid-cols-[1fr_auto]">
             <div>
               <StatusPill tone="success">Available now</StatusPill>
-              <h3 className="mt-3 text-2xl font-semibold">{starterDeposit.productName}</h3>
+              <h3 className="mt-3 text-2xl font-semibold">Secure SimplePractice booking</h3>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-[#25543b]">
-                A generic {starterDeposit.amount} starter payment for onboarding coordination. Do
-                not enter symptoms, diagnoses, session notes, or clinical details in Stripe.
+                Request a consult, register in the client portal, and use the reviewed clinical
+                workflow there. Do not put symptoms, diagnoses, notes, or clinical details into
+                public ad, analytics, or payment fields.
               </p>
             </div>
             <div className="grid content-center gap-3 md:justify-items-end">
-              <p className="text-3xl font-semibold text-primary">{starterDeposit.amount}</p>
-              <ButtonLink href={starterDeposit.paymentUrl} icon={CreditCard}>
-                Pay deposit
+              <p className="text-3xl font-semibold text-primary">Portal</p>
+              <ButtonLink href={clinicalBooking.href} icon={Sparkles}>
+                {clinicalBooking.label}
               </ButtonLink>
             </div>
           </Card>
@@ -47,8 +49,8 @@ export default function PricingPage() {
                 </div>
                 <p className="mt-6 text-4xl font-semibold text-primary">{plan.price}</p>
                 <div className="mt-6">
-                  <ButtonLink href="/start" icon={CreditCard} variant="secondary">
-                    Request review
+                  <ButtonLink href={clinicalBooking.href} icon={Sparkles} variant="secondary">
+                    Request consult
                   </ButtonLink>
                 </div>
               </Card>
@@ -73,7 +75,7 @@ export default function PricingPage() {
             {
               icon: ShieldCheck,
               title: "Billing isolation",
-              copy: "No symptoms, diagnoses, provider names, session details, or notes are sent to Stripe metadata.",
+              copy: `${starterDeposit.productName} remains generic if used; no symptoms, diagnoses, provider names, session details, or notes belong in payment metadata.`,
             },
           ].map((item) => (
             <Card key={item.title}>

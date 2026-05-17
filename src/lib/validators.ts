@@ -45,6 +45,7 @@ export const intakeSchema = z.object({
   ageRange: z.enum(["child", "teen", "adult"]),
   concerns: concernList,
   modalityPreference: z.enum(["emdr", "cbt", "dbt", "family", "skills", "unsure"]),
+  requestedSessionStartsAt: z.string().datetime().optional(),
   schedulePreference: z.enum(["weekday", "evening", "weekend", "flexible"]),
   wantsAiSupport: checkboxBoolean.default(false),
   consentedToMatch: checkboxBoolean,
@@ -119,4 +120,10 @@ export const providerSwitchSchema = z.object({
     .array(z.enum(["emdr", "cbt", "dbt", "family", "skills", "unsure"]))
     .default([]),
   reasonCode: z.enum(["fit", "availability", "specialty", "preference", "other"]),
+});
+
+export const providerIntakeStatusSchema = z.object({
+  intakeId: z.string().min(1),
+  reviewNote: optionalTrimmed,
+  status: z.enum(["submitted", "reviewed", "accepted", "needs-info", "declined"]),
 });

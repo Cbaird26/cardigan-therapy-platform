@@ -15,6 +15,7 @@ import {
 import Image from "next/image";
 import { SiteShell } from "@/components/site-shell";
 import { ButtonLink, Card, SectionHeader, StatusPill } from "@/components/ui";
+import { clinicalBooking } from "@/lib/booking";
 import { dashboardMetrics, membershipPlans, providers } from "@/lib/mock-data";
 import { publicPath } from "@/lib/public-path";
 import { starterDeposit } from "@/lib/revenue";
@@ -58,17 +59,17 @@ export default function Home() {
               between appointments.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <ButtonLink href={starterDeposit.paymentUrl} icon={CreditCard}>
-                {starterDeposit.label}
+              <ButtonLink href={clinicalBooking.href} icon={Sparkles}>
+                {clinicalBooking.label}
               </ButtonLink>
-              <ButtonLink href="/start#test-without-payment" icon={ClipboardList} variant="secondary">
-                Test flow free
-              </ButtonLink>
-              <ButtonLink href="/start" icon={Sparkles}>
-                Start intake
+              <ButtonLink href="/provider-login" icon={LockKeyhole} variant="secondary">
+                Provider login
               </ButtonLink>
               <ButtonLink href="/client" icon={ArrowRight} variant="secondary">
                 View client app
+              </ButtonLink>
+              <ButtonLink href={starterDeposit.paymentUrl} icon={CreditCard} variant="secondary">
+                Generic deposit
               </ButtonLink>
             </div>
             <div className="mt-8 grid gap-3 text-sm text-muted sm:grid-cols-3">
@@ -149,21 +150,30 @@ export default function Home() {
           <SectionHeader
             eyebrow="Care model"
             title="Membership care with integrated clinical boundaries."
-            copy={`${starterDeposit.productName} is available as a generic ${starterDeposit.amount} starter payment. Clinical details stay out of Stripe, payment metadata, video room names, and notification copy.`}
+            copy={
+              clinicalBooking.isSimplePracticeEnabled
+                ? "Tonight's live clinical path uses SimplePractice for secure booking, client portal registration, payment, and telehealth. Cardigan stays the public front door and internal operating dashboard."
+                : `${starterDeposit.productName} is available as a generic ${starterDeposit.amount} starter payment. Clinical details stay out of Stripe, payment metadata, video room names, and notification copy.`
+            }
           />
           <div className="grid gap-4">
             <Card className="grid gap-4 border-[#8db69d] bg-[#e7f2ea] sm:grid-cols-[1fr_auto]">
               <div>
-                <p className="text-lg font-semibold">{starterDeposit.productName}</p>
+                <p className="text-lg font-semibold">
+                  {clinicalBooking.isSimplePracticeEnabled ? "Secure SimplePractice booking" : starterDeposit.productName}
+                </p>
                 <p className="mt-2 text-sm leading-6 text-[#25543b]">
-                  Generic starter deposit for onboarding coordination. Do not enter symptoms,
-                  diagnoses, session notes, or clinical details in Stripe.
+                  {clinicalBooking.isSimplePracticeEnabled
+                    ? "Clients register, request appointments, complete portal steps, and use telehealth through SimplePractice. Do not enter clinical details into public payment or ad fields."
+                    : "Generic starter deposit for onboarding coordination. Do not enter symptoms, diagnoses, session notes, or clinical details in Stripe."}
                 </p>
               </div>
               <div className="grid gap-3 sm:justify-items-end">
-                <p className="text-2xl font-semibold text-primary">{starterDeposit.amount}</p>
-                <ButtonLink href={starterDeposit.paymentUrl} icon={CreditCard}>
-                  Pay deposit
+                <p className="text-2xl font-semibold text-primary">
+                  {clinicalBooking.isSimplePracticeEnabled ? "Portal" : starterDeposit.amount}
+                </p>
+                <ButtonLink href={clinicalBooking.href} icon={Sparkles}>
+                  {clinicalBooking.shortLabel}
                 </ButtonLink>
               </div>
             </Card>

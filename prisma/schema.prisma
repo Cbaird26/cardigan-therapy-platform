@@ -85,6 +85,7 @@ model ClientProfile {
   user                 User              @relation(fields: [userId], references: [id])
   legalName            String?
   preferredName        String?
+  phone                String?
   dateOfBirth          DateTime?
   state                String            @default("FL")
   timezone             String            @default("America/New_York")
@@ -162,6 +163,9 @@ model IntakeResponse {
   client            ClientProfile @relation(fields: [clientId], references: [id])
   answers           Json
   triageSummary     String?
+  reviewStatus      String        @default("submitted")
+  reviewNote        String?
+  reviewedAt        DateTime?
   consentedToMatch  Boolean       @default(false)
   createdAt         DateTime      @default(now())
 }

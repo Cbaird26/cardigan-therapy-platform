@@ -3,11 +3,12 @@ import { getRequestContext, requireApiPermission } from "@/lib/auth";
 import { createSessionRequest } from "@/lib/clinical-store";
 import { createDailyRoom, createSafeDailyRoomName } from "@/lib/daily";
 import { featureGateMessage, isFeatureEnabled } from "@/lib/features";
+import { providerSessionContextIfPresent } from "@/lib/provider-auth";
 import { sessionSchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
   try {
-    const context = getRequestContext(request);
+    const context = providerSessionContextIfPresent(request) ?? getRequestContext(request);
     requireApiPermission(context, "session:request");
     const session = sessionSchema.parse(await parseRequestData(request));
     const roomName = createSafeDailyRoomName(session.sessionId);

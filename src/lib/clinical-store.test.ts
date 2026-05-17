@@ -4,8 +4,10 @@ import {
   exportAuditEvents,
   getAdminIntakeSnapshot,
   getLaunchProviders,
+  getProviderPracticeSnapshot,
   resetClinicalStoreForTests,
   submitOnboarding,
+  updateIntakeReviewStatus,
 } from "./clinical-store";
 import { onboardingSchema } from "./validators";
 
@@ -37,6 +39,7 @@ describe("clinical store", () => {
       email: "client@example.test",
       legalName: "Client Person",
       modalityPreference: "emdr",
+      phone: "555-0100",
       schedulePreference: "evening",
       wantsAiSupport: false,
     });
@@ -44,6 +47,7 @@ describe("clinical store", () => {
     const result = await submitOnboarding(intake, context);
     const audit = await exportAuditEvents();
     const admin = await getAdminIntakeSnapshot();
+    const practice = await getProviderPracticeSnapshot();
 
     expect(result.status).toBe("admin-review");
     expect(result.matches).toHaveLength(1);
@@ -51,7 +55,20 @@ describe("clinical store", () => {
     expect(result.storageMode).toBe("memory");
     expect(audit.events).toHaveLength(1);
     expect(admin.intakes).toHaveLength(1);
+    expect(practice.intakes[0]?.reviewStatus).toBe("submitted");
+    expect(practice.intakes[0]?.client?.phone).toBe("555-0100");
     expect(JSON.stringify(audit.events)).not.toContain("client@example.test");
+
+    const updated = await updateIntakeReviewStatus(
+      {
+        intakeId: result.intakeId,
+        reviewNote: "Ready for consult.",
+        status: "reviewed",
+      },
+      { role: "therapist", actorId: "provider-cmb" },
+    );
+
+    expect(updated.reviewStatus).toBe("reviewed");
   });
 
   it("routes out-of-state intakes to out-of-state status without matches", async () => {

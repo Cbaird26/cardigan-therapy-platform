@@ -12,6 +12,7 @@ The app is BetterHelp-inspired but original: Cardigan branding, Florida-first ma
 - API routes for persisted intake, matching, consent signing, admin review, role-aware dashboards, provider switching, secure messages, session requests, checkout gating, Stripe webhook idempotency, AI safety routing, assessments, notes, and audit export
 - Prisma schema for the core platform entities
 - Unit tests for matching, role access, consent gates, Stripe webhook idempotency, Daily room naming, AI safety, and PHI metadata checks
+- Provider-gated Notion Company OS sync for operational records only, with PHI/client clinical data excluded
 - AWS CDK scaffold for Cognito, KMS, S3, Aurora Postgres, CloudTrail, and audit logs
 - PWA manifest and security headers
 
@@ -73,14 +74,17 @@ Required production decisions:
 - `CARDIGAN_REQUIRE_DATABASE`: set to `true` in production so DB failures do not fall back to memory
 - `CARDIGAN_ENABLE_BILLING`, `CARDIGAN_ENABLE_VIDEO`, `CARDIGAN_ENABLE_AI`: keep `false` until vendor BAAs, approvals, and legal/clinical review are complete
 - `NEXT_PUBLIC_CARDIGAN_PAYMENT_LINK`: public Stripe Payment Link for a generic non-PHI starter deposit
+- `NEXT_PUBLIC_SIMPLEPRACTICE_BOOKING_URL`: public SimplePractice booking/client portal URL for tonight's live clinical path
 - `STRIPE_SECRET_KEY`: Stripe account approved for the intended telehealth billing use
 - `DAILY_API_KEY` and `DAILY_DOMAIN`: Daily Healthcare/HIPAA account
 - `AWS_REGION` and `BEDROCK_MODEL_ID`: AWS Bedrock model in an approved account/region
+- `NOTION_TOKEN` plus the `NOTION_*_DATABASE_ID` values: Notion Company OS integration, limited to operations. Do not use it for PHI unless Notion Enterprise, BAA, and HIPAA workspace configuration are complete.
 
 ## Compliance boundaries
 
 - Do not send symptoms, diagnoses, therapist names, session details, notes, or client names to Stripe metadata.
 - Do not put PHI in Daily room names, notification text, error reports, analytics, or logs.
+- Do not sync legal names, phone numbers, emails, symptoms, diagnoses, intake answers, clinical notes, messages, AI conversations, assessments, or crisis details into Notion. The Notion integration is Company OS only: tasks, SOPs, marketing, finance, provider operations counts, and sync logs.
 - AI is limited to intake guidance, skills coaching, and between-session support. It must not diagnose, replace therapy, make treatment decisions, or handle emergencies.
 - Crisis language routes to emergency guidance and provider/admin review.
 - The platform record MVP is not a full EHR replacement.
