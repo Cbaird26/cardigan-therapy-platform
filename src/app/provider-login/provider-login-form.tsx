@@ -1,11 +1,12 @@
 "use client";
 
-import { ArrowRight, LockKeyhole, ShieldAlert } from "lucide-react";
+import { ArrowRight, ExternalLink, LockKeyhole, ShieldAlert } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, StatusPill } from "@/components/ui";
+import { Button, ButtonLink, StatusPill } from "@/components/ui";
 
 const isStaticPreview = process.env.NEXT_PUBLIC_CARDIGAN_STATIC_PREVIEW === "true";
+const localProviderLoginUrl = "http://127.0.0.1:3000/provider-login";
 
 export function ProviderLoginForm() {
   const router = useRouter();
@@ -48,6 +49,42 @@ export function ProviderLoginForm() {
     }
   }
 
+  if (isStaticPreview) {
+    return (
+      <div className="grid gap-4">
+        <div className="rounded-lg border border-[#8db69d] bg-[#e7f2ea] p-4 text-sm text-[#25543b]">
+          <div className="flex items-start gap-2">
+            <LockKeyhole aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <p className="font-semibold">Christopher provider access</p>
+              <p className="mt-1 leading-6">
+                Provider login runs only in the local fullstack app so the dashboard can use a
+                signed session and live server data.
+              </p>
+              <div className="mt-3">
+                <StatusPill tone="warning">local server required</StatusPill>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <ButtonLink href={localProviderLoginUrl} icon={ExternalLink}>
+          Open local provider workspace
+        </ButtonLink>
+
+        <div className="rounded-lg border border-[#d99999] bg-[#f7dddd] p-4 text-sm text-[#7d2626]">
+          <div className="flex items-start gap-2">
+            <ShieldAlert aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>
+              Do not enter provider credentials on the static Pages site. Use the local app at
+              127.0.0.1:3000.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <form className="grid gap-4" onSubmit={submitLogin}>
       <div className="rounded-lg border border-[#8db69d] bg-[#e7f2ea] p-4 text-sm text-[#25543b]">
@@ -59,11 +96,6 @@ export function ProviderLoginForm() {
               Use this local fullstack login to review client requests, update intake status, and
               write simple practice notes.
             </p>
-            {isStaticPreview ? (
-              <div className="mt-3">
-                <StatusPill tone="warning">server runtime required</StatusPill>
-              </div>
-            ) : null}
           </div>
         </div>
       </div>
@@ -95,11 +127,7 @@ export function ProviderLoginForm() {
           required
           type="password"
         />
-        {!isStaticPreview ? (
-          <p className="text-xs leading-5 text-muted">
-            Local default: cardigan-local-provider
-          </p>
-        ) : null}
+        <p className="text-xs leading-5 text-muted">Local default: cardigan-local-provider</p>
       </div>
 
       <Button disabled={isSubmitting} icon={ArrowRight} type="submit">
