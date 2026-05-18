@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+const providerPasscode = process.env.CARDIGAN_PROVIDER_PASSCODE;
+
 test("public platform routes expose the core workflow", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /therapy matching/i })).toBeVisible();
@@ -36,6 +38,9 @@ test("real intake form submits for admin review", async ({ page }, testInfo) => 
 });
 
 test("client submission appears in the provider workspace", async ({ page }, testInfo) => {
+  test.skip(!providerPasscode, "CARDIGAN_PROVIDER_PASSCODE is required for provider workspace e2e.");
+  const loginPasscode = providerPasscode ?? "";
+
   const runId = Date.now();
   const clientName = `Practice Client ${testInfo.project.name} ${runId}`;
   const clientEmail = `practice-${testInfo.project.name.toLowerCase()}-${runId}@example.test`;
@@ -50,7 +55,7 @@ test("client submission appears in the provider workspace", async ({ page }, tes
 
   await page.goto("/provider-login");
   await page.getByLabel("Provider email").fill("christopher@cardiganincorporated.com");
-  await page.getByLabel("Passcode").fill("cardigan-local-provider");
+  await page.getByLabel("Passcode").fill(loginPasscode);
   await page.getByRole("button", { name: /enter provider workspace/i }).click();
 
   await expect(page.getByRole("heading", { name: /client request queue/i })).toBeVisible();

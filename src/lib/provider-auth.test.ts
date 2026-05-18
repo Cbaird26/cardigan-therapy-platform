@@ -22,20 +22,31 @@ describe("provider auth", () => {
     }
   });
 
-  it("validates the local provider passcode", () => {
+  it("validates the configured provider passcode", () => {
     delete process.env.CARDIGAN_PROVIDER_EMAIL;
-    delete process.env.CARDIGAN_PROVIDER_PASSCODE;
+    process.env.CARDIGAN_PROVIDER_PASSCODE = "test-provider-passcode";
 
     expect(
       validateProviderCredentials({
         email: "christopher@cardiganincorporated.com",
-        passcode: "cardigan-local-provider",
+        passcode: "test-provider-passcode",
       }),
     ).toBe(true);
     expect(
       validateProviderCredentials({
         email: "christopher@cardiganincorporated.com",
         passcode: "wrong",
+      }),
+    ).toBe(false);
+  });
+
+  it("rejects provider login when no passcode is configured", () => {
+    delete process.env.CARDIGAN_PROVIDER_PASSCODE;
+
+    expect(
+      validateProviderCredentials({
+        email: "christopher@cardiganincorporated.com",
+        passcode: "test-provider-passcode",
       }),
     ).toBe(false);
   });

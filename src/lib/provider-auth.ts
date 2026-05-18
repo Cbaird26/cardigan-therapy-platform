@@ -6,8 +6,6 @@ export const PROVIDER_SESSION_COOKIE = "cardigan_provider_session";
 export const PROVIDER_ID = "provider-cmb";
 
 const DEFAULT_PROVIDER_EMAIL = "christopher@cardiganincorporated.com";
-const DEFAULT_PROVIDER_PASSCODE = "cardigan-local-provider";
-const LOCAL_SESSION_SECRET = "cardigan-local-session-secret";
 const SESSION_TTL_SECONDS = 60 * 60 * 12;
 
 export type ProviderSession = {
@@ -24,11 +22,7 @@ function configuredProviderEmail() {
 }
 
 function configuredProviderPasscode() {
-  if (process.env.CARDIGAN_PROVIDER_PASSCODE) {
-    return process.env.CARDIGAN_PROVIDER_PASSCODE;
-  }
-
-  return process.env.NODE_ENV === "production" ? undefined : DEFAULT_PROVIDER_PASSCODE;
+  return process.env.CARDIGAN_PROVIDER_PASSCODE;
 }
 
 function sessionSecret() {
@@ -36,11 +30,7 @@ function sessionSecret() {
     return process.env.CARDIGAN_SESSION_SECRET;
   }
 
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("CARDIGAN_SESSION_SECRET is required outside local development.");
-  }
-
-  return LOCAL_SESSION_SECRET;
+  throw new Error("CARDIGAN_SESSION_SECRET is required.");
 }
 
 function safeEqual(left: string, right: string) {
@@ -70,7 +60,7 @@ function cookieValue(request: Request, name: string) {
 export function providerAuthDefaults() {
   return {
     email: configuredProviderEmail(),
-    localPasscodeEnabled: !process.env.CARDIGAN_PROVIDER_PASSCODE && process.env.NODE_ENV !== "production",
+    passcodeConfigured: Boolean(process.env.CARDIGAN_PROVIDER_PASSCODE),
   };
 }
 

@@ -127,7 +127,9 @@ export function ProviderLoginForm() {
           required
           type="password"
         />
-        <p className="text-xs leading-5 text-muted">Local default: cardigan-local-provider</p>
+        <p className="text-xs leading-5 text-muted">
+          Use the provider passcode stored in local environment config.
+        </p>
       </div>
 
       <Button disabled={isSubmitting} icon={ArrowRight} type="submit">
