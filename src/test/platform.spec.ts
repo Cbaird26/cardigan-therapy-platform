@@ -59,6 +59,8 @@ test("client submission appears in the provider workspace", async ({ page }, tes
   await page.getByRole("button", { name: /enter provider workspace/i }).click();
 
   await expect(page.getByRole("heading", { name: /client request queue/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /provider alerts/i })).toBeVisible();
+  await expect(page.getByText(/secure Cardigan update/i).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: clientName })).toBeVisible();
 
   const clientRequest = page

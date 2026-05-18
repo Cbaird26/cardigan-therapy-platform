@@ -129,6 +129,7 @@ model ProviderProfile {
   sessions          Session[]
   messageThreads    MessageThread[]
   therapistNotes    TherapistNote[]
+  providerAlerts    ProviderAlert[]
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 }
@@ -300,6 +301,20 @@ model CrisisFlag {
   summary     String
   createdAt   DateTime      @default(now())
   reviewedAt  DateTime?
+}
+
+model ProviderAlert {
+  id             String          @id @default(cuid())
+  providerId     String
+  provider       ProviderProfile @relation(fields: [providerId], references: [id])
+  type           String
+  priority       String
+  title          String
+  body           String
+  route          String
+  deliveryStatus Json?
+  readAt         DateTime?
+  createdAt      DateTime        @default(now())
 }
 
 model AuditEvent {

@@ -2,6 +2,14 @@ import { createHash, randomUUID } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 import { classifyRisk } from "./ai-safety";
+import {
+  alertConfigStatus,
+  buildProviderAlert,
+  dispatchProviderAlert,
+  type ProviderAlertPriority,
+  type ProviderAlertRecord,
+  type ProviderAlertType,
+} from "./alerting";
 import type { RequestContext } from "./auth";
 import {
   createAuditEvent,
@@ -87,6 +95,10 @@ type StoredPracticeRecord = Record<string, unknown> & {
   status?: string;
 };
 
+type StoredProviderAlert = ProviderAlertRecord & {
+  providerId: string;
+};
+
 type MemoryState = {
   assessments: Array<Record<string, unknown>>;
   aiConversations: Array<Record<string, unknown>>;
@@ -97,6 +109,7 @@ type MemoryState = {
   matchCandidates: Array<Record<string, unknown>>;
   messages: Array<Record<string, unknown>>;
   notes: StoredPracticeRecord[];
+  providerAlerts: StoredProviderAlert[];
   providerSwitches: Array<Record<string, unknown>>;
   sessions: StoredPracticeRecord[];
   threads: StoredThread[];
@@ -118,6 +131,7 @@ function memoryStore(): MemoryState {
     matchCandidates: [],
     messages: [],
     notes: [],
+    providerAlerts: [],
     providerSwitches: [],
     sessions: [],
     threads: [],
@@ -290,6 +304,46 @@ function createAuditMemory(input: {
   return audit;
 }
 
+async function createProviderAlertPrisma(input: {
+  priority: ProviderAlertPriority;
+  type: ProviderAlertType;
+}) {
+  const alert = buildProviderAlert(input);
+  const deliveryStatus = await dispatchProviderAlert(alert);
+
+  await ensureChristopherProviderPrisma();
+  await prisma.providerAlert.create({
+    data: {
+      body: alert.body,
+      deliveryStatus: toPrismaJson(deliveryStatus),
+      id: alert.id,
+      priority: alert.priority,
+      providerId: CLINICAL_LEAD_PROVIDER_ID,
+      route: alert.route,
+      title: alert.title,
+      type: alert.type,
+    },
+  });
+
+  return { ...alert, deliveryStatus };
+}
+
+async function createProviderAlertMemory(input: {
+  priority: ProviderAlertPriority;
+  type: ProviderAlertType;
+}) {
+  const alert = buildProviderAlert(input);
+  const deliveryStatus = await dispatchProviderAlert(alert);
+  const storedAlert: StoredProviderAlert = {
+    ...alert,
+    deliveryStatus,
+    providerId: CLINICAL_LEAD_PROVIDER_ID,
+  };
+
+  memoryStore().providerAlerts.unshift(storedAlert);
+  return storedAlert;
+}
+
 function onboardingStatus(input: OnboardingInput, matches: MatchCandidate[]) {
   if (input.clientState !== "FL") {
     return "out-of-state";
@@ -444,6 +498,14 @@ export async function submitOnboarding(input: OnboardingInput, context: RequestC
         resourceType: "IntakeResponse",
       });
 
+      const alerts = [
+        await createProviderAlertPrisma({ priority: "high", type: "intake-submitted" }),
+      ];
+
+      if (requestedSession) {
+        alerts.push(await createProviderAlertPrisma({ priority: "high", type: "session-requested" }));
+      }
+
       return {
         intakeId: intake.id,
         clientId: client.id,
@@ -451,6 +513,7 @@ export async function submitOnboarding(input: OnboardingInput, context: RequestC
         matches,
         consents,
         storageMode: "prisma" as const,
+        alerts,
         notification,
         requestedSession,
         audit: auditInput({
@@ -557,6 +620,14 @@ export async function submitOnboarding(input: OnboardingInput, context: RequestC
         resourceType: "IntakeResponse",
       });
 
+      const alerts = [
+        await createProviderAlertMemory({ priority: "high", type: "intake-submitted" }),
+      ];
+
+      if (requestedSession) {
+        alerts.push(await createProviderAlertMemory({ priority: "high", type: "session-requested" }));
+      }
+
       return {
         intakeId,
         clientId,
@@ -564,6 +635,7 @@ export async function submitOnboarding(input: OnboardingInput, context: RequestC
         matches,
         consents,
         storageMode: "memory" as const,
+        alerts,
         notification,
         requestedSession,
         audit,
@@ -664,7 +736,13 @@ export async function createMessage(input: MessageInput, context: RequestContext
         resourceType: "Message",
       });
 
+      const alert = await createProviderAlertPrisma({
+        priority: escalated ? "urgent" : "high",
+        type: escalated ? "message-escalated" : "message-created",
+      });
+
       return {
+        alert,
         messageId: message.id,
         threadId: input.threadId,
         status: escalated ? "escalated-for-review" : "sent",
@@ -716,7 +794,13 @@ export async function createMessage(input: MessageInput, context: RequestContext
         resourceType: "Message",
       });
 
+      const alert = await createProviderAlertMemory({
+        priority: escalated ? "urgent" : "high",
+        type: escalated ? "message-escalated" : "message-created",
+      });
+
       return {
+        alert,
         messageId,
         threadId: input.threadId,
         status: escalated ? "escalated-for-review" : "sent",
@@ -744,7 +828,8 @@ export async function createAssessment(input: AssessmentInput, context: RequestC
         resourceId: assessment.id,
         resourceType: "Assessment",
       });
-      return { ...assessment, storageMode: "prisma" as const };
+      const alert = await createProviderAlertPrisma({ priority: "normal", type: "assessment-created" });
+      return { ...assessment, alert, storageMode: "prisma" as const };
     },
     async () => {
       const assessment = {
@@ -759,7 +844,8 @@ export async function createAssessment(input: AssessmentInput, context: RequestC
         resourceId: assessment.id,
         resourceType: "Assessment",
       });
-      return { ...assessment, storageMode: "memory" as const };
+      const alert = await createProviderAlertMemory({ priority: "normal", type: "assessment-created" });
+      return { ...assessment, alert, storageMode: "memory" as const };
     },
   );
 }
@@ -816,7 +902,12 @@ export async function requestProviderSwitch(input: ProviderSwitchInput, context:
         resourceId: input.clientId,
         resourceType: "ProviderSwitchRequest",
       });
+      const alert = await createProviderAlertPrisma({
+        priority: "high",
+        type: "provider-switch-requested",
+      });
       return {
+        alert,
         switchRequestId: audit.id,
         status: "admin-review",
         storageMode: "prisma" as const,
@@ -840,7 +931,12 @@ export async function requestProviderSwitch(input: ProviderSwitchInput, context:
         resourceId: request.id,
         resourceType: "ProviderSwitchRequest",
       });
+      const alert = await createProviderAlertMemory({
+        priority: "high",
+        type: "provider-switch-requested",
+      });
       return {
+        alert,
         switchRequestId: request.id,
         status: request.status,
         storageMode: "memory" as const,
@@ -868,7 +964,8 @@ export async function createSessionRequest(input: SessionInput, context: Request
         resourceId: session.id,
         resourceType: "Session",
       });
-      return { ...session, storageMode: "prisma" as const };
+      const alert = await createProviderAlertPrisma({ priority: "high", type: "session-requested" });
+      return { ...session, alert, storageMode: "prisma" as const };
     },
     async () => {
       const session = {
@@ -885,7 +982,8 @@ export async function createSessionRequest(input: SessionInput, context: Request
         resourceId: session.id,
         resourceType: "Session",
       });
-      return { ...session, storageMode: "memory" as const };
+      const alert = await createProviderAlertMemory({ priority: "high", type: "session-requested" });
+      return { ...session, alert, storageMode: "memory" as const };
     },
   );
 }
@@ -934,7 +1032,12 @@ export async function recordAiConversation(
         resourceType: "AIConversation",
       });
 
+      const alert = safety.escalationRequired
+        ? await createProviderAlertPrisma({ priority: "urgent", type: "ai-escalated" })
+        : undefined;
+
       return {
+        alert,
         conversationId: conversation?.id ?? `ai_unsaved_${randomUUID()}`,
         savedToRecord,
         storageMode: "prisma" as const,
@@ -973,7 +1076,11 @@ export async function recordAiConversation(
         resourceType: "AIConversation",
       });
 
-      return { conversationId, savedToRecord, storageMode: "memory" as const };
+      const alert = safety.escalationRequired
+        ? await createProviderAlertMemory({ priority: "urgent", type: "ai-escalated" })
+        : undefined;
+
+      return { alert, conversationId, savedToRecord, storageMode: "memory" as const };
     },
   );
 }
@@ -1004,7 +1111,7 @@ export async function getProviderPracticeSnapshot() {
     async () => {
       await ensureChristopherProviderPrisma();
 
-      const [provider, intakes, clients, sessions, notes, crisisFlags] = await Promise.all([
+      const [provider, intakes, clients, sessions, notes, crisisFlags, providerAlerts] = await Promise.all([
         prisma.providerProfile.findUnique({
           where: { id: CLINICAL_LEAD_PROVIDER_ID },
           select: {
@@ -1075,6 +1182,11 @@ export async function getProviderPracticeSnapshot() {
           orderBy: { createdAt: "desc" },
           take: 25,
         }),
+        prisma.providerAlert.findMany({
+          where: { providerId: CLINICAL_LEAD_PROVIDER_ID },
+          orderBy: { createdAt: "desc" },
+          take: 50,
+        }),
       ]);
 
       return {
@@ -1084,6 +1196,8 @@ export async function getProviderPracticeSnapshot() {
         sessions,
         notes,
         openRiskFlags: crisisFlags,
+        providerAlerts,
+        alertConfig: alertConfigStatus(),
         storageMode: "prisma" as const,
       };
     },
@@ -1142,6 +1256,8 @@ export async function getProviderPracticeSnapshot() {
           }),
         notes: store.notes.filter((note) => note.providerId === CLINICAL_LEAD_PROVIDER_ID),
         openRiskFlags: store.crisisFlags.filter((flag) => flag.status === "OPEN"),
+        providerAlerts: store.providerAlerts.filter((alert) => alert.providerId === CLINICAL_LEAD_PROVIDER_ID),
+        alertConfig: alertConfigStatus(),
         storageMode: "memory" as const,
       };
     },
@@ -1192,6 +1308,43 @@ export async function updateIntakeReviewStatus(
       });
 
       return { intakeId: intake.id, reviewStatus: intake.reviewStatus, storageMode: "memory" as const };
+    },
+  );
+}
+
+export async function markProviderAlertRead(input: { alertId: string }, context: RequestContext) {
+  return runWithStore(
+    async () => {
+      const alert = await prisma.providerAlert.update({
+        where: { id: input.alertId },
+        data: { readAt: new Date() },
+      });
+
+      await createAuditPrisma({
+        action: "provider_alert.read",
+        context,
+        resourceId: alert.id,
+        resourceType: "ProviderAlert",
+      });
+
+      return { alertId: alert.id, readAt: alert.readAt, storageMode: "prisma" as const };
+    },
+    async () => {
+      const alert = memoryStore().providerAlerts.find((item) => item.id === input.alertId);
+
+      if (!alert) {
+        throw new Error("Provider alert not found.");
+      }
+
+      alert.readAt = new Date().toISOString();
+      createAuditMemory({
+        action: "provider_alert.read",
+        context,
+        resourceId: alert.id,
+        resourceType: "ProviderAlert",
+      });
+
+      return { alertId: alert.id, readAt: alert.readAt, storageMode: "memory" as const };
     },
   );
 }

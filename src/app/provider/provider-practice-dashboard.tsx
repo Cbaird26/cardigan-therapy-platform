@@ -1,7 +1,8 @@
 "use client";
 
 import {
-  AlertTriangle,
+  Bell,
+  BellRing,
   CalendarClock,
   Cloud,
   Download,
@@ -15,7 +16,7 @@ import {
   Upload,
   UsersRound,
 } from "lucide-react";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, ButtonLink, Card, SectionHeader, StatusPill } from "@/components/ui";
 
 type ReviewStatus = "submitted" | "reviewed" | "accepted" | "needs-info" | "declined";
@@ -48,6 +49,14 @@ type PracticeSnapshot = {
     email: string;
     providerId: string;
   };
+  alertConfig?: {
+    dashboard: boolean;
+    emailWebhook: boolean;
+    googleVoiceNumberConfigured: boolean;
+    notionWebhook: boolean;
+    smsWebhook: boolean;
+    webhook: boolean;
+  };
   clients: PracticeClient[];
   intakes: PracticeIntake[];
   notes: Array<{
@@ -69,6 +78,16 @@ type PracticeSnapshot = {
     id: string;
     user?: { displayName?: string; email?: string };
   };
+  providerAlerts?: Array<{
+    body: string;
+    createdAt?: string;
+    deliveryStatus?: Array<{ channel: string; status: string }>;
+    id: string;
+    priority?: "normal" | "high" | "urgent";
+    readAt?: string | null;
+    title: string;
+    type?: string;
+  }>;
   sessions: Array<{
     client?: PracticeClient;
     clientId?: string;
@@ -147,6 +166,12 @@ export function ProviderPracticeDashboard() {
   const [isLoading, setIsLoading] = useState(!isStaticPreview);
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncingNotion, setIsSyncingNotion] = useState(false);
+  const notifiedAlertIds = useRef<Set<string>>(new Set());
+  const [notificationPermission, setNotificationPermission] = useState<
+    NotificationPermission | "unsupported"
+  >(() =>
+    typeof window !== "undefined" && "Notification" in window ? Notification.permission : "unsupported",
+  );
 
   const loadNotionStatus = useCallback(async () => {
     if (isStaticPreview) {
@@ -230,6 +255,38 @@ export function ProviderPracticeDashboard() {
       isActive = false;
     };
   }, [loadNotionStatus]);
+
+  useEffect(() => {
+    if (isStaticPreview) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      void loadPractice();
+    }, 30_000);
+
+    return () => window.clearInterval(interval);
+  }, [loadPractice]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window) || Notification.permission !== "granted") {
+      return;
+    }
+
+    const unreadAlerts = (snapshot?.providerAlerts ?? []).filter((alert) => !alert.readAt);
+
+    for (const alert of unreadAlerts) {
+      if (notifiedAlertIds.current.has(alert.id)) {
+        continue;
+      }
+
+      new Notification(alert.title, {
+        body: alert.body,
+        tag: alert.id,
+      });
+      notifiedAlertIds.current.add(alert.id);
+    }
+  }, [snapshot?.providerAlerts]);
 
   const clientOptions = useMemo(() => {
     const byId = new Map<string, PracticeClient>();
@@ -340,6 +397,37 @@ export function ProviderPracticeDashboard() {
     setError("Provider logged out.");
   }
 
+  async function enableDesktopAlerts() {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setNotificationPermission("unsupported");
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+    setNotificationPermission(permission);
+  }
+
+  async function markAlertRead(alertId: string) {
+    setError(null);
+
+    try {
+      const response = await fetch("/api/provider/alerts/read", {
+        body: JSON.stringify({ alertId }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "Alert could not be marked reviewed.");
+      }
+
+      await loadPractice();
+    } catch (alertError) {
+      setError(alertError instanceof Error ? alertError.message : "Alert could not be marked reviewed.");
+    }
+  }
+
   if (isStaticPreview) {
     return (
       <div className="grid gap-4">
@@ -388,6 +476,9 @@ export function ProviderPracticeDashboard() {
     );
   }
 
+  const providerAlerts = snapshot.providerAlerts ?? [];
+  const unreadAlertCount = providerAlerts.filter((alert) => !alert.readAt).length;
+
   return (
     <div className="grid gap-4">
       <div className="grid gap-4 md:grid-cols-4">
@@ -395,7 +486,12 @@ export function ProviderPracticeDashboard() {
           ["Requests", snapshot.intakes.length.toString(), FileCheck2, "warning" as const],
           ["Clients", clientOptions.length.toString(), UsersRound, "success" as const],
           ["Sessions", snapshot.sessions.length.toString(), CalendarClock, "neutral" as const],
-          ["Risk flags", snapshot.openRiskFlags.length.toString(), AlertTriangle, snapshot.openRiskFlags.length ? "danger" as const : "success" as const],
+          [
+            "Alerts",
+            unreadAlertCount.toString(),
+            unreadAlertCount ? BellRing : Bell,
+            unreadAlertCount ? "danger" as const : "success" as const,
+          ],
         ].map(([label, value, Icon, tone]) => (
           <Card key={label as string}>
             <div className="flex items-start justify-between gap-3">
@@ -446,6 +542,94 @@ export function ProviderPracticeDashboard() {
             {error}
           </p>
         ) : null}
+      </Card>
+
+      <Card>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <SectionHeader
+            title="Provider alerts"
+            copy="Every Cardigan-side request, secure message, scheduling request, and safety escalation creates a generic alert without contact details, message text, or clinical content."
+          />
+          <div className="flex flex-wrap gap-2">
+            <StatusPill tone="success">Dashboard on</StatusPill>
+            <StatusPill tone={notificationPermission === "granted" ? "success" : "warning"}>
+              Desktop {notificationPermission}
+            </StatusPill>
+            <StatusPill tone={snapshot.alertConfig?.smsWebhook ? "success" : "warning"}>
+              Text bridge {snapshot.alertConfig?.smsWebhook ? "on" : "needs setup"}
+            </StatusPill>
+            <StatusPill tone={snapshot.alertConfig?.googleVoiceNumberConfigured ? "success" : "neutral"}>
+              Google Voice noted
+            </StatusPill>
+          </div>
+        </div>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Button
+            disabled={notificationPermission === "granted" || notificationPermission === "unsupported"}
+            icon={BellRing}
+            onClick={() => {
+              void enableDesktopAlerts();
+            }}
+            type="button"
+            variant="secondary"
+          >
+            Enable desktop alerts
+          </Button>
+          <Button
+            icon={RefreshCcw}
+            onClick={() => {
+              void loadPractice();
+            }}
+            type="button"
+            variant="ghost"
+          >
+            Check now
+          </Button>
+        </div>
+        <div className="mt-5 grid gap-3">
+          {providerAlerts.length ? (
+            providerAlerts.slice(0, 8).map((alert) => (
+              <div
+                className="grid gap-3 rounded-lg border border-border bg-background p-4 sm:grid-cols-[1fr_auto]"
+                key={alert.id}
+              >
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold">{alert.title}</p>
+                    <StatusPill
+                      tone={
+                        alert.priority === "urgent"
+                          ? "danger"
+                          : alert.priority === "high"
+                            ? "warning"
+                            : "neutral"
+                      }
+                    >
+                      {alert.priority ?? "normal"}
+                    </StatusPill>
+                    {!alert.readAt ? <StatusPill tone="danger">unread</StatusPill> : null}
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-muted">{alert.body}</p>
+                  <p className="mt-1 text-xs text-muted">{formatDate(alert.createdAt)}</p>
+                </div>
+                <Button
+                  disabled={Boolean(alert.readAt)}
+                  onClick={() => {
+                    void markAlertRead(alert.id);
+                  }}
+                  type="button"
+                  variant="secondary"
+                >
+                  Mark reviewed
+                </Button>
+              </div>
+            ))
+          ) : (
+            <p className="rounded-lg border border-border bg-background p-4 text-sm text-muted">
+              No provider alerts yet. New secure activity will appear here and refresh every 30 seconds.
+            </p>
+          )}
+        </div>
       </Card>
 
       <Card>
