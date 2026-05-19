@@ -61,6 +61,15 @@ Use this only with a public Cardigan landing page or a SimplePractice secure boo
 Do not send traffic into localhost, GitHub Pages forms that collect clinical details, Notion,
 or any form that stores PHI outside an approved system.
 
+Default May 2026 lean launch:
+
+- Primary domain: `https://www.christophermichaelbaird.com/`
+- Primary destination: `https://christopher-michael-baird.clientsecure.me/request/prescreener-reason-for-care`
+- Public support pages: Florida telehealth therapy, EMDR therapy, kids and teens therapy, family support, and LMHC supervision
+- Starter budget: `$20/day` for 7 days
+- Tracking posture: no remarketing, no client lists, no sensitive audiences, no Meta Pixel, no intake-page pixels, and no PHI-bearing UTMs
+- Conversion naming: use generic events such as `consult_request_started` and `consult_request_completed`; never include symptoms, diagnoses, client names, session details, message text, or provider notes
+
 Campaign:
 
 - Name: `Cardigan FL Telehealth - Search - Public`
